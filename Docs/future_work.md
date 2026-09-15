@@ -24,9 +24,15 @@ Not attempted, not faked with a stub that pretends to work:
   is a direct port of the Python desktop app's own (also not fully verified)
   palette claims. Needs either the real CSS/brand guide or screenshots to
   check against.
-- **Packaging and app store submission.** Needs an Apple Developer account
-  (plus a Mac, for iOS) and a Google Play Console account; inherently a
-  human/billing decision, not something to attempt autonomously.
+- **Mobile app store submission** (Apple App Store, Google Play). Needs an
+  Apple Developer account (plus a Mac, for iOS) and a Google Play Console
+  account; inherently a human/billing decision, not something to attempt
+  autonomously.
+  **Desktop distribution is different and is built**: `.github/workflows/build.yml`
+  produces a Windows installer and a Linux AppImage on every GitHub release.
+  See `packaging.md`, including the honest caveat that neither build has
+  been run end-to-end yet (no Windows machine and no root for the Linux
+  toolchain were available while writing it).
 
 ## Deliberate design choices, not gaps
 

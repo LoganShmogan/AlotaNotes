@@ -1,0 +1,7 @@
+#!/bin/sh
+# Entry point appimagetool executes. Flutter's Linux embedder resolves its
+# bundle (lib/, data/) relative to the executable's own directory, so the
+# whole flutter build linux bundle is copied to usr/bin/ as-is (see
+# .github/workflows/build.yml) and this just execs straight into it.
+HERE="$(dirname "$(readlink -f "${0}")")"
+exec "${HERE}/usr/bin/quizapp" "$@"

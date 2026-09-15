@@ -68,6 +68,8 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
   cautionary tale behind why widget tests are the trustworthy path here
 - `running_locally.md`, setup, first run, where data lives, known Android
   build gotchas
+- `packaging.md`, the Windows installer / Linux AppImage release build,
+  triggered automatically on a GitHub release
 - `future_work.md`, known, deliberate deferrals: what's blocked on things
   only a human can provide (developer accounts, real devices, brand assets),
   and what's just not built yet
