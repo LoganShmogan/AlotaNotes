@@ -53,11 +53,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Future<void> _importFile() async {
-    final picked = await FilePicker.pickFile(
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: supportedExtensions.map((e) => e.substring(1)).toList(),
     );
-    final path = picked?.path;
+    final path = result?.files.single.path;
     if (path == null) return; // user cancelled
 
     try {

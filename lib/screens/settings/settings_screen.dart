@@ -58,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _exporting = true);
     try {
       final file = await DataExportService(widget.db).exportToTempFile();
-      await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], text: 'Quiz App AI data export'));
+      await Share.shareXFiles([XFile(file.path)], text: 'Quiz App AI data export');
     } finally {
       if (mounted) setState(() => _exporting = false);
     }

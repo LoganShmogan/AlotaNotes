@@ -61,18 +61,16 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   }
 
   Future<void> _bulkImport() async {
-    // allowMultiple defaults to true on pickFiles() -- deprecated as an
-    // explicit param in favor of using pickFile() for the single-file case
-    // instead, not because multi-select itself is going away.
-    final files = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: supportedExtensions.map((e) => e.substring(1)).toList(),
     );
-    if (files.isEmpty) return;
+    if (result == null || result.files.isEmpty) return;
     if (!mounted) return;
     final imported = await Navigator.of(context).push<int>(
       MaterialPageRoute(
-        builder: (_) => BulkImportStagingScreen(db: widget.db, folderId: widget.folder.id, pickedFiles: files),
+        builder: (_) => BulkImportStagingScreen(db: widget.db, folderId: widget.folder.id, pickedFiles: result.files),
       ),
     );
     if (imported != null && mounted) {
