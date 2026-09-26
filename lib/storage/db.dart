@@ -4,9 +4,12 @@
 /// default), so behavior is deterministic and easy to test.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 String dtToIso(DateTime value) => value.toUtc().toIso8601String();
 
@@ -19,18 +22,39 @@ DateTime utcNow() => DateTime.now().toUtc();
 /// `sqflite_common_ffi`'s `databaseFactoryFfi.openDatabase(inMemoryDatabasePath)`)
 /// into the repos directly instead, the same "inject the connection" pattern
 /// the Python app's repos use.
+///
+/// Plain `sqflite` only covers Android/iOS/macOS. The web build stores the
+/// database in the browser's IndexedDB (via `sqflite_common_ffi_web`, whose
+/// `web/sqlite3.wasm` + `web/sqflite_sw.js` come from
+/// `dart run sqflite_common_ffi_web:setup`), and Windows/Linux use the FFI
+/// build of SQLite.
 Future<Database> openAppDatabase() async {
-  final directory = await getApplicationDocumentsDirectory();
-  final dbPath = join(directory.path, 'quizapp.db');
-  return openDatabase(
+  final DatabaseFactory factory;
+  final String dbPath;
+  if (kIsWeb) {
+    factory = databaseFactoryFfiWeb;
+    dbPath = 'quizapp.db';
+  } else {
+    if (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) {
+      sqfliteFfiInit();
+      factory = databaseFactoryFfi;
+    } else {
+      factory = databaseFactorySqflitePlugin;
+    }
+    final directory = await getApplicationDocumentsDirectory();
+    dbPath = join(directory.path, 'quizapp.db');
+  }
+  return factory.openDatabase(
     dbPath,
-    version: 1,
-    onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
-    onCreate: (db, version) async {
-      for (final statement in schemaStatements) {
-        await db.execute(statement);
-      }
-    },
+    options: OpenDatabaseOptions(
+      version: 1,
+      onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+      onCreate: (db, version) async {
+        for (final statement in schemaStatements) {
+          await db.execute(statement);
+        }
+      },
+    ),
   );
 }
 

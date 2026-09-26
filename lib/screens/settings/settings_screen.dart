@@ -57,8 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _exportData() async {
     setState(() => _exporting = true);
     try {
-      final file = await DataExportService(widget.db).exportToTempFile();
-      await Share.shareXFiles([XFile(file.path)], text: 'Quiz App AI data export');
+      final file = await DataExportService(widget.db).exportFile();
+      await Share.shareXFiles([file], text: 'Quiz App AI data export');
     } finally {
       if (mounted) setState(() => _exporting = false);
     }

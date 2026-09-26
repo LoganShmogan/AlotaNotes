@@ -6,23 +6,18 @@
 // PDF structure than is worth hand-building); the .pdf branch is exercised
 // manually instead -- a known, deliberate gap in this file's coverage.
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
 import 'package:quizapp/core/text_extraction.dart';
 
-Future<Directory> _tempDir() => Directory.systemTemp.createTemp('text_extraction_test_');
-
-void _writeZip(String path, Map<String, String> filesByName) {
+List<int> _zip(Map<String, String> filesByName) {
   final archive = Archive();
   for (final entry in filesByName.entries) {
     final bytes = utf8.encode(entry.value);
     archive.addFile(ArchiveFile(entry.key, bytes.length, bytes));
   }
-  final zipBytes = ZipEncoder().encode(archive);
-  File(path).writeAsBytesSync(zipBytes!);
+  return ZipEncoder().encode(archive)!;
 }
 
 const _docxDocumentXml = '''
@@ -48,49 +43,29 @@ String _pptxSlideXml(String text) => '''
 ''';
 
 void main() {
-  test('.txt is read as-is', () async {
-    final dir = await _tempDir();
-    final path = p.join(dir.path, 'note.txt');
-    await File(path).writeAsString('Plain text content.');
-
-    expect(await extractText(path), 'Plain text content.');
+  test('.txt is read as-is', () {
+    expect(extractText('note.txt', utf8.encode('Plain text content.')), 'Plain text content.');
   });
 
-  test('.md is read as-is', () async {
-    final dir = await _tempDir();
-    final path = p.join(dir.path, 'note.md');
-    await File(path).writeAsString('# Heading\n\nBody.');
-
-    expect(await extractText(path), '# Heading\n\nBody.');
+  test('.md is read as-is', () {
+    expect(extractText('note.md', utf8.encode('# Heading\n\nBody.')), '# Heading\n\nBody.');
   });
 
-  test('.docx extracts paragraph text, joining runs within a paragraph', () async {
-    final dir = await _tempDir();
-    final path = p.join(dir.path, 'note.docx');
-    _writeZip(path, {'word/document.xml': _docxDocumentXml});
-
-    final text = await extractText(path);
+  test('.docx extracts paragraph text, joining runs within a paragraph', () {
+    final text = extractText('note.docx', _zip({'word/document.xml': _docxDocumentXml}));
     expect(text, 'First paragraph.\nSecond paragraph.');
   });
 
-  test('.pptx extracts text per slide, slides in numeric order', () async {
-    final dir = await _tempDir();
-    final path = p.join(dir.path, 'deck.pptx');
-    _writeZip(path, {
+  test('.pptx extracts text per slide, slides in numeric order', () {
+    final text = extractText('deck.pptx', _zip({
       'ppt/slides/slide2.xml': _pptxSlideXml('Second slide'),
       'ppt/slides/slide1.xml': _pptxSlideXml('First slide'),
       'ppt/slides/slide10.xml': _pptxSlideXml('Tenth slide'), // numeric, not lexical, sort
-    });
-
-    final text = await extractText(path);
+    }));
     expect(text, 'First slide\n\nSecond slide\n\nTenth slide');
   });
 
-  test('unsupported extension throws UnsupportedFileTypeError', () async {
-    final dir = await _tempDir();
-    final path = p.join(dir.path, 'note.exe');
-    await File(path).writeAsBytes([0, 1, 2]);
-
-    await expectLater(extractText(path), throwsA(isA<UnsupportedFileTypeError>()));
+  test('unsupported extension throws UnsupportedFileTypeError', () {
+    expect(() => extractText('note.exe', [0, 1, 2]), throwsA(isA<UnsupportedFileTypeError>()));
   });
 }

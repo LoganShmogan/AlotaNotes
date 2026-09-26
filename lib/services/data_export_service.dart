@@ -11,10 +11,8 @@
 library;
 
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DataExportService {
@@ -33,14 +31,12 @@ class DataExportService {
     return data;
   }
 
-  /// Writes the export to a temp file and returns its path, ready to hand
-  /// to a share sheet or file picker save dialog.
-  Future<File> exportToTempFile() async {
+  /// Builds the export as an in-memory file, ready to hand to a share
+  /// sheet (which on web falls back to a browser download).
+  Future<XFile> exportFile() async {
     final data = await buildExport();
-    final directory = await getTemporaryDirectory();
     final timestamp = DateTime.now().toUtc().toIso8601String().replaceAll(RegExp(r'[:.]'), '-');
-    final file = File(p.join(directory.path, 'quizapp-export-$timestamp.json'));
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(data));
-    return file;
+    final bytes = utf8.encode(const JsonEncoder.withIndent('  ').convert(data));
+    return XFile.fromData(bytes, mimeType: 'application/json', name: 'quizapp-export-$timestamp.json');
   }
 }

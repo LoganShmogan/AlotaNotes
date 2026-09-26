@@ -6,7 +6,7 @@
 /// (pypdf/python-docx/python-pptx), which is exactly the risk
 /// Docs/flutter_rewrite_plan.md flagged as needing a spike before
 /// committing to the full import feature list. Resolution:
-/// - .txt/.md: trivial, stdlib file read.
+/// - .txt/.md: trivial, UTF-8 decode.
 /// - .pdf: `syncfusion_flutter_pdf` -- a real pure-Dart PDF library (free
 ///   for individuals/small teams under Syncfusion's community license, not
 ///   fully OSS -- worth knowing, not hidden).
@@ -14,10 +14,12 @@
 ///   so these are hand-rolled here using `archive` (unzip) + `xml` (parse),
 ///   the same approach `python-docx`/`python-pptx` use under the hood --
 ///   both .docx and .pptx are just zip archives of XML files.
+///
+/// Works on raw bytes rather than a file path, because the web build's file
+/// picker only hands back bytes (there's no filesystem path in a browser).
 library;
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -32,10 +34,10 @@ class UnsupportedFileTypeError implements Exception {
   String toString() => message;
 }
 
-Future<String> _extractTxtOrMd(File file) => file.readAsString();
+String _extractTxtOrMd(List<int> bytes) => utf8.decode(bytes, allowMalformed: true);
 
-Future<String> _extractPdf(File file) async {
-  final document = PdfDocument(inputBytes: await file.readAsBytes());
+String _extractPdf(List<int> bytes) {
+  final document = PdfDocument(inputBytes: bytes);
   try {
     return PdfTextExtractor(document).extractText();
   } finally {
@@ -46,8 +48,8 @@ Future<String> _extractPdf(File file) async {
 /// .docx word/document.xml stores paragraphs as `<w:p>` containing `<w:t>`
 /// text runs. Concatenate every `<w:t>` within a paragraph, one paragraph
 /// per line.
-Future<String> _extractDocx(File file) async {
-  final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
+String _extractDocx(List<int> bytes) {
+  final archive = ZipDecoder().decodeBytes(bytes);
   final entry = archive.findFile('word/document.xml');
   if (entry == null) return '';
   final document = XmlDocument.parse(_utf8DecodeArchiveFile(entry));
@@ -63,8 +65,8 @@ Future<String> _extractDocx(File file) async {
 /// .pptx stores each slide as ppt/slides/slideN.xml, with text in `<a:t>`
 /// runs inside `<p:txBody>` shapes. One slide's text per paragraph, slides
 /// separated by a blank line (mirrors the Python app's pptx extractor).
-Future<String> _extractPptx(File file) async {
-  final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
+String _extractPptx(List<int> bytes) {
+  final archive = ZipDecoder().decodeBytes(bytes);
   final slideFiles = archive.files
       .where((f) => RegExp(r'^ppt/slides/slide\d+\.xml$').hasMatch(f.name))
       .toList()
@@ -89,19 +91,19 @@ String _utf8DecodeArchiveFile(ArchiveFile file) {
   return utf8.decode(content, allowMalformed: true);
 }
 
-Future<String> extractText(String path) async {
-  final extension = _extensionOf(path);
-  final file = File(path);
+/// `fileName` is only used for its extension, to pick the extractor.
+String extractText(String fileName, List<int> bytes) {
+  final extension = _extensionOf(fileName);
   switch (extension) {
     case '.txt':
     case '.md':
-      return _extractTxtOrMd(file);
+      return _extractTxtOrMd(bytes);
     case '.pdf':
-      return _extractPdf(file);
+      return _extractPdf(bytes);
     case '.docx':
-      return _extractDocx(file);
+      return _extractDocx(bytes);
     case '.pptx':
-      return _extractPptx(file);
+      return _extractPptx(bytes);
     default:
       throw UnsupportedFileTypeError(
         "Unsupported file type '$extension'. Supported: ${supportedExtensions.join(', ')}",

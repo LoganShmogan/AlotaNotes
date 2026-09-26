@@ -33,6 +33,9 @@ class AnthropicProvider extends AIProvider {
               'x-api-key': apiKey,
               'anthropic-version': anthropicVersion,
               'content-type': 'application/json',
+              // Required for Anthropic to allow the request from a browser
+              // (CORS) in the web build; ignored on other platforms.
+              'anthropic-dangerous-direct-browser-access': 'true',
             },
             body: jsonEncode(payload),
           )

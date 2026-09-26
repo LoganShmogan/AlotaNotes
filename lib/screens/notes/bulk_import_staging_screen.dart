@@ -34,13 +34,11 @@ class BulkImportStagingScreen extends StatefulWidget {
 }
 
 class _StagedItem {
-  final String path;
+  final PlatformFile file;
   final TextEditingController titleController;
   String? error;
 
-  _StagedItem(this.path) : titleController = TextEditingController(text: _fileNameOf(path));
-
-  static String _fileNameOf(String path) => path.split('/').last;
+  _StagedItem(this.file) : titleController = TextEditingController(text: file.name);
 }
 
 class _BulkImportStagingScreenState extends State<BulkImportStagingScreen> {
@@ -51,7 +49,7 @@ class _BulkImportStagingScreenState extends State<BulkImportStagingScreen> {
   @override
   void initState() {
     super.initState();
-    _items = widget.pickedFiles.where((f) => f.path != null).map((f) => _StagedItem(f.path!)).toList();
+    _items = widget.pickedFiles.where((f) => f.bytes != null).map(_StagedItem.new).toList();
   }
 
   @override
@@ -83,12 +81,12 @@ class _BulkImportStagingScreenState extends State<BulkImportStagingScreen> {
     for (var i = 0; i < _items.length; i++) {
       final item = _items[i];
       try {
-        final body = await extractText(item.path);
+        final body = extractText(item.file.name, item.file.bytes!);
         await _notesRepo.create(
           widget.folderId,
-          item.titleController.text.trim().isEmpty ? _StagedItem._fileNameOf(item.path) : item.titleController.text.trim(),
+          item.titleController.text.trim().isEmpty ? item.file.name : item.titleController.text.trim(),
           body,
-          sourceFilename: _StagedItem._fileNameOf(item.path),
+          sourceFilename: item.file.name,
           sortOrder: i,
         );
         successCount++;
@@ -123,7 +121,7 @@ class _BulkImportStagingScreenState extends State<BulkImportStagingScreen> {
               itemBuilder: (context, index) {
                 final item = _items[index];
                 return Card(
-                  key: ValueKey(item.path),
+                  key: ObjectKey(item),
                   child: ListTile(
                     leading: const Icon(Icons.drag_handle),
                     title: TextField(
@@ -131,7 +129,7 @@ class _BulkImportStagingScreenState extends State<BulkImportStagingScreen> {
                       decoration: const InputDecoration(border: InputBorder.none),
                     ),
                     subtitle: Text(
-                      item.error ?? _StagedItem._fileNameOf(item.path),
+                      item.error ?? item.file.name,
                       style: item.error != null ? const TextStyle(color: Colors.redAccent) : null,
                     ),
                     trailing: IconButton(

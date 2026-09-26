@@ -56,15 +56,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: supportedExtensions.map((e) => e.substring(1)).toList(),
+      withData: true,
     );
-    final path = result?.files.single.path;
-    if (path == null) return; // user cancelled
+    final file = result?.files.single;
+    if (file == null || file.bytes == null) return; // user cancelled
 
     try {
-      final text = await extractText(path);
+      final text = extractText(file.name, file.bytes!);
       _bodyController.text = text;
       if (_titleController.text.trim().isEmpty) {
-        _titleController.text = path.split('/').last;
+        _titleController.text = file.name;
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Imported.')));

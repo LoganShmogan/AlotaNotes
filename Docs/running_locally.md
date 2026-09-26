@@ -56,15 +56,15 @@ provider account directly with your own key.
 
 ## Where data lives
 
-Standard platform app-data locations via `path_provider`
-(`getApplicationDocumentsDirectory()`), so the exact path is OS-dependent:
-
 - `quizapp.db`: the SQLite database (folders, notes, questions, review
-  history).
-- `settings.json`: non-secret settings (provider, model, base URL, default
-  question format).
+  history), in the standard app-data folder via `path_provider`
+  (`getApplicationDocumentsDirectory()`), so the exact path is
+  OS-dependent. On web it lives in the browser's IndexedDB instead (see
+  `hosting.md`).
+- Non-secret settings (provider, model, base URL, default question format)
+  go in `shared_preferences`, the platform's key-value store.
 - The API key lives in the platform's secure storage (Android Keystore, iOS
-  Keychain), not as a file.
+  Keychain; encrypted browser storage on web), not as a file.
 
 ## Known Android build gotchas
 

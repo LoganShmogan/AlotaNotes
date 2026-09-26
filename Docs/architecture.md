@@ -57,16 +57,17 @@ Repos never contain business logic; that lives in `core/` or `services/`.
 **`ai/`**: a provider-agnostic abstraction for AI-driven question
 generation. See `ai_providers.md`.
 
-**`settings/`**: non-secret app settings (`app_settings.dart`, a plain JSON
-file). The AI API key itself is *not* stored here; it goes through
-`flutter_secure_storage` directly from the Account screen, since it's a
-secret and settings.json isn't encrypted.
+**`settings/`**: non-secret app settings (`app_settings.dart`, a JSON
+string in `shared_preferences`). The AI API key itself is *not* stored
+here; it goes through `flutter_secure_storage` directly from the Account
+screen, since it's a secret and `shared_preferences` isn't encrypted.
 
 **`services/`**: orchestration that spans multiple repos/the AI layer:
 - `question_generation_service.dart`: reads a note, calls the configured
   `AIProvider`, persists the returned questions.
 - `data_export_service.dart`: dumps every table's raw rows to one JSON
-  file for the Settings screen's "Export all data" action.
+  file for the Settings screen's "Export all data" action (a share sheet
+  on mobile, a download on web).
 
 **`auth/`**: `AuthService` abstraction. `HardcodedAuthService` is the only
 implementation right now (a single local admin/1234 session); see
@@ -83,7 +84,7 @@ which `AuthService`, which repos, which screens are wired together).
    automatic keyword extraction or note-linking happens (unlike the Python
    desktop app), not ported yet, see `future_work.md`.
 2. **Import a file**: `core/text_extraction.extractText()` turns a picked
-   file into plain text; either a single import (straight into the note
+   file's bytes into plain text; either a single import (straight into the note
    editor) or a bulk import (through `BulkImportStagingScreen`'s
    preview/reorder/confirm flow; nothing is written to the real notebook
    until the user confirms).

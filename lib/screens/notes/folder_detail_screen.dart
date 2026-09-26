@@ -65,6 +65,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: supportedExtensions.map((e) => e.substring(1)).toList(),
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
     if (!mounted) return;

@@ -1,0 +1,14 @@
+services:
+  alotanotes:
+    build: .
+    image: alotanotes-web
+    container_name: alotanotes
+    restart: unless-stopped
+    # No published ports: Caddy reaches this container as alotanotes:80 over
+    # the shared `web` network. See Docs/hosting.md.
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

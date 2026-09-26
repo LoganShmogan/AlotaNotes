@@ -1,0 +1,15 @@
+.git
+.github
+.dart_tool
+.idea
+.claude
+build
+android
+ios
+linux
+macos
+windows
+test
+Docs
+*.iml
+.flutter-plugins-dependencies

@@ -1,15 +1,14 @@
 /// Non-secret application settings (AI provider choice, model, question
 /// format). API keys are NOT stored here -- see auth/secure key storage in
 /// the Account screen. Direct port of the Python desktop app's
-/// `settings/app_settings.py`, using a plain JSON file instead of a keyring
-/// (nothing here is secret).
+/// `settings/app_settings.py`, stored as a JSON string in
+/// `shared_preferences` instead of a keyring (nothing here is secret) --
+/// which, unlike a file on disk, also works in the web build.
 library;
 
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/models.dart';
 
@@ -39,24 +38,14 @@ class AppSettings {
 }
 
 class AppSettingsStore {
-  final Future<File> Function()? _fileProvider;
+  static const _key = 'app_settings';
 
-  // Can't use an initializing formal (`this._fileProvider`) here -- that
-  // would make the named constructor parameter private too, so tests
-  // outside this file couldn't pass `fileProvider:` at all.
-  // ignore: prefer_initializing_formals
-  const AppSettingsStore({Future<File> Function()? fileProvider}) : _fileProvider = fileProvider;
-
-  Future<File> _file() async {
-    if (_fileProvider != null) return _fileProvider();
-    final directory = await getApplicationDocumentsDirectory();
-    return File(p.join(directory.path, 'settings.json'));
-  }
+  const AppSettingsStore();
 
   Future<AppSettings> load() async {
-    final file = await _file();
-    if (!await file.exists()) return const AppSettings();
-    final data = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    final raw = await SharedPreferencesAsync().getString(_key);
+    if (raw == null) return const AppSettings();
+    final data = jsonDecode(raw) as Map<String, dynamic>;
     return AppSettings(
       provider: data['provider'] as String? ?? defaultProvider,
       model: data['model'] as String? ?? defaultModel,
@@ -66,8 +55,6 @@ class AppSettingsStore {
   }
 
   Future<void> save(AppSettings settings) async {
-    final file = await _file();
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(settings.toJson()));
+    await SharedPreferencesAsync().setString(_key, jsonEncode(settings.toJson()));
   }
 }

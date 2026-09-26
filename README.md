@@ -70,6 +70,8 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
   build gotchas
 - `packaging.md`, the Windows installer / Linux AppImage release build,
   triggered automatically on a GitHub release
+- `hosting.md`, the web build in Docker, and putting it behind a reverse
+  proxy at alotanotes.savepoint.co.nz
 - `future_work.md`, known, deliberate deferrals: what's blocked on things
   only a human can provide (developer accounts, real devices, brand assets),
   and what's just not built yet
