@@ -2,14 +2,15 @@
 // XML), not checked in as binaries -- same reasoning as the Python desktop
 // app's tests/fixtures/pdf_builder.py: no extra "write this format"
 // dependency, and it keeps the fixture's exact shape visible in the test
-// itself. .pdf isn't covered here (Syncfusion's PdfDocument needs a fuller
-// PDF structure than is worth hand-building); the .pdf branch is exercised
-// manually instead -- a known, deliberate gap in this file's coverage.
+// itself. The .pdf fixture is generated with Syncfusion's own PDF writer
+// (the same package the app reads with), since a valid PDF is too fiddly to
+// hand-build.
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizapp/core/text_extraction.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 List<int> _zip(Map<String, String> filesByName) {
   final archive = Archive();
@@ -42,6 +43,16 @@ String _pptxSlideXml(String text) => '''
 </p:sld>
 ''';
 
+List<int> _pdf(List<String> pageTexts) {
+  final document = PdfDocument();
+  for (final text in pageTexts) {
+    document.pages.add().graphics.drawString(text, PdfStandardFont(PdfFontFamily.helvetica, 12));
+  }
+  final bytes = document.saveSync();
+  document.dispose();
+  return bytes;
+}
+
 void main() {
   test('.txt is read as-is', () {
     expect(extractText('note.txt', utf8.encode('Plain text content.')), 'Plain text content.');
@@ -67,5 +78,38 @@ void main() {
 
   test('unsupported extension throws UnsupportedFileTypeError', () {
     expect(() => extractText('note.exe', [0, 1, 2]), throwsA(isA<UnsupportedFileTypeError>()));
+  });
+
+  test('.pdf extracts embedded text from every page', () {
+    final text = extractText('lecture.pdf', _pdf(['Page one text', 'Page two text']));
+    expect(text, contains('Page one text'));
+    expect(text, contains('Page two text'));
+  });
+
+  test('extension matching is case-insensitive', () {
+    expect(extractText('NOTE.TXT', utf8.encode('upper')), 'upper');
+  });
+
+  test('.txt tolerates invalid UTF-8 instead of throwing', () {
+    expect(extractText('note.txt', [0x68, 0x69, 0xff]), 'hi\uFFFD');
+  });
+
+  test('.docx without word/document.xml yields empty text', () {
+    expect(extractText('note.docx', _zip({'other.xml': '<x/>'})), '');
+  });
+
+  test('.pptx with no slides yields empty text', () {
+    expect(extractText('deck.pptx', _zip({'ppt/presentation.xml': '<x/>'})), '');
+  });
+
+  test('a file name with no extension is unsupported, with a helpful message', () {
+    expect(
+      () => extractText('README', []),
+      throwsA(isA<UnsupportedFileTypeError>().having(
+        (e) => e.toString(),
+        'message',
+        "Unsupported file type ''. Supported: .txt, .md, .pdf, .docx, .pptx",
+      )),
+    );
   });
 }

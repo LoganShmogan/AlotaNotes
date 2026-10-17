@@ -49,4 +49,46 @@ void main() {
 
     await expectLater(provider.generateQuestions('note'), throwsA(isA<AIProviderError>()));
   });
+
+  test('network failure raises AIProviderError', () async {
+    final client = MockClient((request) async => throw Exception('connection refused'));
+    final provider = AnthropicProvider(apiKey: 'k', model: 'm', httpClient: client);
+
+    await expectLater(
+      provider.generateQuestions('note'),
+      throwsA(isA<AIProviderError>().having((e) => e.message, 'message', contains('Request to Anthropic API failed'))),
+    );
+  });
+
+  test('invalid JSON body raises AIProviderError', () async {
+    final client = MockClient((request) async => http.Response('not json', 200));
+    final provider = AnthropicProvider(apiKey: 'k', model: 'm', httpClient: client);
+
+    await expectLater(
+      provider.generateQuestions('note'),
+      throwsA(isA<AIProviderError>().having((e) => e.message, 'message', contains('invalid JSON'))),
+    );
+  });
+
+  test('base_url override is respected, with a trailing slash trimmed', () async {
+    final client = MockClient((request) async {
+      expect(request.url.toString(), 'https://proxy.example.com/v1/messages');
+      return http.Response(
+        jsonEncode({
+          'content': [
+            {'text': jsonEncode({'questions': []})},
+          ],
+        }),
+        200,
+      );
+    });
+    final provider = AnthropicProvider(
+      apiKey: 'k',
+      model: 'm',
+      baseUrl: 'https://proxy.example.com/',
+      httpClient: client,
+    );
+
+    expect(await provider.generateQuestions('note'), isEmpty);
+  });
 }

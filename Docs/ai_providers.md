@@ -90,7 +90,13 @@ AIProvider buildProvider(String providerName, String apiKey, String model, Strin
 ```
 
 The single registration point mapping a provider name string (`"openai"` /
-`"anthropic"`) to a concrete class.
+`"anthropic"`) to a concrete class. Unknown names throw
+`UnknownProviderError`.
+
+`NoteEditorScreen` calls it through an optional `providerBuilder`
+constructor parameter that defaults to `buildProvider`. The app never sets
+it; widget tests pass a builder returning a fake provider, so the
+"Generate" flow is tested end to end without any HTTP.
 
 ## Adding a new provider
 
@@ -110,7 +116,8 @@ The single registration point mapping a provider name string (`"openai"` /
 ## Where settings/keys live
 
 - Non-secret settings (provider name, model, base URL, default question
-  format): `lib/settings/app_settings.dart`, a plain JSON file.
+  format): `lib/settings/app_settings.dart`, a JSON string in
+  `shared_preferences` (which also works in the web build, unlike a file).
 - The API key itself: `flutter_secure_storage`, written directly from the
   Account screen. There is no separate "secrets store" abstraction the way
   the Python desktop app has one (its `ApiKeyStore` interface exists because

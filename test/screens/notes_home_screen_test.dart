@@ -29,8 +29,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:quizapp/screens/notes/folder_detail_screen.dart';
 import 'package:quizapp/screens/notes/notes_home_screen.dart';
 import 'package:quizapp/storage/db.dart';
+import 'package:quizapp/storage/folders_repo.dart';
 
 /// `pumpAndSettle()` refuses to work while a `CircularProgressIndicator` is
 /// on screen (it's an infinite animation, so "settled" never becomes true) --
@@ -49,7 +51,7 @@ Future<void> _waitForLoad(WidgetTester tester) async {
 /// expected outcome with real delays instead of a single `pumpAndSettle()`.
 Future<void> _pumpUntil(WidgetTester tester, bool Function() condition, {int maxTries = 100}) async {
   for (var i = 0; i < maxTries; i++) {
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
     if (condition()) return;
     await Future<void>.delayed(const Duration(milliseconds: 20));
   }
@@ -139,6 +141,23 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No subjects yet. Tap + to create one.'), findsOneWidget);
+    });
+  });
+
+  testWidgets('tapping a folder opens it, and returning refreshes the list', (tester) async {
+    await tester.runAsync(() async {
+      final db = await _openTestDatabase();
+      final folder = await FoldersRepo(db).create('Physics');
+      await tester.pumpWidget(MaterialApp(home: NotesHomeScreen(db: db)));
+      await _waitForLoad(tester);
+
+      await tester.tap(find.text('Physics'));
+      await _pumpUntil(tester, () => find.byType(FolderDetailScreen).evaluate().isNotEmpty);
+      await _pumpUntil(tester, () => find.text('Empty. Use + to add a folder or note.').evaluate().isNotEmpty);
+
+      await FoldersRepo(db).delete(folder.id);
+      await tester.pageBack();
+      await _pumpUntil(tester, () => find.text('No subjects yet. Tap + to create one.').evaluate().isNotEmpty);
     });
   });
 }

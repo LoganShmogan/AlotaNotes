@@ -45,13 +45,14 @@ flutter analyze
 flutter test
 ```
 
-45 tests covering pure logic (scheduling, grading, text extraction), storage
+175 tests covering pure logic (scheduling, grading, text extraction), storage
 repositories (real in-memory SQLite), AI providers (HTTP-mocked, no real
-network/API key needed), and screen-level widget tests (real `tester.tap()`
-interaction, not device input simulation). See `Docs/testing.md` for why
-that last distinction matters: it's the difference between a test that's
-actually reliable and one that isn't, and this project hit that difference
-the hard way once already.
+network/API key needed), and widget tests for every screen (real
+`tester.tap()` interaction, not device input simulation). Line coverage of
+`lib/` is 100%; `flutter test --coverage && dart run tool/check_coverage.dart`
+checks it. See `Docs/testing.md` for why the device-input distinction
+matters: it's the difference between a test that's actually reliable and one
+that isn't, and this project hit that difference the hard way once already.
 
 ## Documentation
 
@@ -64,7 +65,8 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
 - `ai_providers.md`, the AI provider abstraction (OpenAI/Anthropic), how to
   add a third
 - `gui_theming.md`, the visual design system
-- `testing.md`, how to run tests, what's covered, and the ADB-tap
+- `testing.md`, how to run tests and check coverage, the test fakes and
+  patterns, what's not covered, and the ADB-tap
   cautionary tale behind why widget tests are the trustworthy path here
 - `running_locally.md`, setup, first run, where data lives, known Android
   build gotchas

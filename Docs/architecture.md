@@ -48,7 +48,10 @@ lib/
 
 **`storage/`**: a thin `sqflite` data-access layer, one repo class per table
 group (`FoldersRepo`, `NotesRepo`, `QuestionsRepo`, `ReviewsRepo`). No ORM:
-`db.dart` holds the schema and a connection factory; each repo takes a
+`db.dart` holds the schema and a connection factory (`openAppDatabase()`,
+with `appDatabaseFactory()` picking the SQLite backend per platform:
+IndexedDB-backed on web, FFI on Windows/Linux, the `sqflite` plugin on
+Android/iOS/macOS); each repo takes a
 `Database` via constructor injection (so tests can pass a real in-memory
 SQLite database instead of a hand-written fake) and exposes plain
 create/get/list/update methods that take/return `core/models.dart` classes.
@@ -67,7 +70,9 @@ screen, since it's a secret and `shared_preferences` isn't encrypted.
   `AIProvider`, persists the returned questions.
 - `data_export_service.dart`: dumps every table's raw rows to one JSON
   file for the Settings screen's "Export all data" action (a share sheet
-  on mobile, a download on web).
+  on mobile/desktop, a download on web). `exportFile()` returns the file
+  name alongside the file, because `XFile.fromData` only keeps the name on
+  web; elsewhere it's passed to the share sheet via `fileNameOverrides`.
 
 **`auth/`**: `AuthService` abstraction. `HardcodedAuthService` is the only
 implementation right now (a single local admin/1234 session); see

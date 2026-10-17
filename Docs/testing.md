@@ -7,24 +7,64 @@ flutter analyze
 flutter test
 ```
 
-45 tests, all passing as of the last work session.
+175 tests, all passing as of the last work session.
+
+## Coverage
+
+Every line in `lib/` is covered (1042/1042 lines). To check:
+
+```bash
+flutter test --coverage
+dart run tool/check_coverage.dart
+```
+
+`tool/check_coverage.dart` reads `coverage/lcov.info` directly, so it
+doesn't need `lcov`/`genhtml` installed. It lists any uncovered lines and
+exits non-zero below 100% (pass a number, e.g. `95`, to use a different
+threshold). It also fails if a `lib/` file never appears in the report,
+which happens when no test imports the file at all. Flutter's report leaves
+those files out entirely, so a plain percentage would hide them.
+
+This is **line** coverage, not branch coverage. A line counts as covered
+once any part of it runs, so a one-line `a ? b : c` is covered even if only
+one side ever runs. The one place that matters here is listed under
+"What's not covered" below.
 
 ## Structure
 
 ```
 test/
+├── helpers/
+│   └── test_env.dart                  # shared DB setup, plugin fakes, async polling helpers
 ├── core/
-│   ├── scheduling_test.dart       # pure function, table-driven cases
-│   ├── grading_test.dart          # pure function
-│   └── text_extraction_test.dart  # hand-built .docx/.pptx fixtures
+│   ├── scheduling_test.dart           # pure function, table-driven cases
+│   ├── grading_test.dart              # pure function
+│   └── text_extraction_test.dart      # hand-built .docx/.pptx, generated .pdf
 ├── ai/
-│   ├── base_test.dart             # JSON response parsing, no network
-│   ├── openai_provider_test.dart  # HTTP mocked via http's MockClient
+│   ├── base_test.dart                 # JSON response parsing, no network
+│   ├── prompts_test.dart              # prompt templates, linked-note block
+│   ├── provider_factory_test.dart
+│   ├── openai_provider_test.dart      # HTTP mocked via http's MockClient
 │   └── anthropic_provider_test.dart
+├── auth/
+│   └── auth_service_test.dart
+├── settings/
+│   └── app_settings_test.dart         # in-memory shared_preferences
 ├── storage/
-│   └── repos_test.dart            # real in-memory SQLite via sqflite_common_ffi
-└── screens/
-    └── notes_home_screen_test.dart  # real widget tree, tester.tap()
+│   ├── db_test.dart                   # backend selection, real on-disk open
+│   └── repos_test.dart                # real in-memory SQLite via sqflite_common_ffi
+├── services/
+│   ├── question_generation_service_test.dart  # fake AIProvider
+│   └── data_export_service_test.dart
+└── screens/                           # real widget trees, tester.tap()
+    ├── app_shell_test.dart            # main(), auth gate, login, RootShell tabs, Account
+    ├── notes_home_screen_test.dart
+    ├── folder_detail_screen_test.dart
+    ├── bulk_import_staging_screen_test.dart
+    ├── note_editor_screen_test.dart
+    ├── question_screens_test.dart     # NoteQuestionsScreen + QuestionEditorScreen
+    ├── quiz_screen_test.dart
+    └── settings_screen_test.dart
 ```
 
 ## Why widget tests, not device-input simulation
@@ -94,15 +134,47 @@ supposed to.
 - **Hand-built `.docx`/`.pptx` fixtures** (in `text_extraction_test.dart`,
   built with the `archive` package's `ZipEncoder` at test time) rather than
   checked-in binaries, so the exact shape of what's being parsed stays
-  visible in the test itself.
+  visible in the test itself. The `.pdf` fixture is generated at test time
+  with Syncfusion's own PDF writer, the same package the app reads with.
+- **Every platform plugin is faked through its official test hook**, set
+  up per test by `setUpTestEnv()` in `test/helpers/test_env.dart`:
+  - `flutter_secure_storage`: `FlutterSecureStorage.setMockInitialValues`
+  - `shared_preferences`: `InMemorySharedPreferencesAsync`
+  - `file_picker`: a `FakeFilePicker` whose `result` each test sets (null
+    means the user cancelled)
+  - `share_plus`: a `FakeSharePlatform` that records the shared files
+  - `path_provider`: a `FakePathProvider` pointing at a fresh temp directory
+
+  No test ever reaches a real platform channel.
+- **Screens that reach `RootShell` run as Linux**
+  (`variant: TargetPlatformVariant.only(TargetPlatform.linux)`). That makes
+  the real, unmodified `openAppDatabase()` take its FFI branch and open
+  `quizapp.db` in the fake documents directory, instead of calling the
+  `sqflite` plugin, which has no implementation under `flutter test`. The
+  variant resets the platform override after each test on its own.
+- **Seams only where a dependency can't be faked from outside.**
+  `NoteEditorScreen` takes an optional `providerBuilder` (so "Generate" can
+  use a fake `AIProvider` instead of real HTTP), and
+  `appDatabaseFactory({isWeb, platform})` is split out of `openAppDatabase()`
+  (so the web and Android/iOS backend choices can be asserted from the VM).
+  Both default to exactly what the app used before.
+- **Navigation waits use real delays too.** `settleNavigation()` interleaves
+  frame pumps with short real delays, because many pushes and pops sit
+  next to real DB work (create a note, then open it; refresh a list on
+  return). Pumping frames alone finishes before that I/O does.
 
 ## What's not covered
 
-- `.pdf` extraction (`core/text_extraction.dart`'s Syncfusion branch) has no
-  automated test; a realistic PDF structure isn't worth hand-building the
-  way the `.docx`/`.pptx` fixtures are. Verified manually instead.
-- No automated end-to-end test drives the real app on a device/emulator
-  (the ADB-tap approach was tried and found unreliable, see above). Startup
-  and cross-screen navigation are verified manually before considering a
-  batch of changes done; this is a real gap worth a proper headless
-  device-test setup eventually, not a solved problem.
+- **The web-only runtime path.** `kIsWeb` is a compile-time constant, so
+  the VM test runner can never take the web side of
+  `openAppDatabase()`'s path expression, and it can never actually open
+  the IndexedDB factory (on the VM it throws `UnsupportedError`, which
+  `db_test.dart` asserts). The web build is checked by building and serving
+  it instead: `flutter build web` and the Docker image (see `hosting.md`).
+  Neither of those exercises the app's behaviour in a real browser.
+- **No automated end-to-end test on a real device or emulator.** The
+  ADB-tap approach was tried and found unreliable (see above). Every screen
+  and the navigation between them now has widget tests, but real platform
+  behaviour (the native file picker, share sheet, keychain, and on-device
+  SQLite) is still only checked by hand. That's a real gap worth a proper
+  `integration_test` setup eventually, not a solved problem.

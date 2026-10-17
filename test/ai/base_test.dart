@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:quizapp/ai/base.dart';
+import 'package:quizapp/ai/openai_provider.dart';
 import 'package:quizapp/core/models.dart';
 
 void main() {
@@ -42,5 +44,30 @@ void main() {
       () => parseGeneratedQuestions('{"questions": [{"prompt": "no expected answer"}]}'),
       throwsA(isA<AIProviderError>()),
     );
+  });
+
+  test('throws AIProviderError when a question entry is not an object', () {
+    expect(
+      () => parseGeneratedQuestions('{"questions": ["just a string"]}'),
+      throwsA(isA<AIProviderError>().having((e) => e.message, 'message', contains('not an object'))),
+    );
+  });
+
+  test('an empty choices list is treated as short answer', () {
+    final questions = parseGeneratedQuestions(
+      '{"questions": [{"prompt": "P", "expected_answer": "A", "choices": []}]}',
+    );
+    expect(questions.single.questionType, questionTypeShortAnswer);
+    expect(questions.single.choices, isNull);
+  });
+
+  test('AIProviderError.toString is its message', () {
+    expect(const AIProviderError('boom').toString(), 'boom');
+  });
+
+  test('providers default to a real http.Client and a 30s timeout', () {
+    final provider = OpenAIProvider(apiKey: 'k', model: 'm');
+    expect(provider.httpClient, isA<http.Client>());
+    expect(provider.timeout, const Duration(seconds: 30));
   });
 }
