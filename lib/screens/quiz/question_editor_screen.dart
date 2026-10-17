@@ -57,16 +57,22 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     List<(String, bool)>? choices;
+    var expectedAnswer = _expectedAnswerController.text.trim();
     if (_choiceControllers.isNotEmpty) {
       choices = [
         for (var i = 0; i < _choiceControllers.length; i++)
           (_choiceControllers[i].text.trim(), i == _correctChoiceIndex),
       ];
+      // The expected-answer field is hidden for multiple choice, so keep it
+      // in step with the selected choice; the quiz shows it on a wrong answer.
+      for (final (text, isCorrect) in choices) {
+        if (isCorrect) expectedAnswer = text;
+      }
     }
     await _questionsRepo.updateContent(
       widget.questionId,
       prompt: _promptController.text.trim(),
-      expectedAnswer: _expectedAnswerController.text.trim(),
+      expectedAnswer: expectedAnswer,
       choices: choices,
     );
     if (!mounted) return;
@@ -74,9 +80,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved.')));
   }
 
-  void _openSourceNote() {
-    final note = _sourceNote;
-    if (note == null) return;
+  void _openSourceNote(Note note) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => NoteEditorScreen(db: widget.db, noteId: note.id)),
     );
@@ -118,7 +122,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                       title: const Text('Generated from'),
                       subtitle: Text(_sourceNote!.title),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: _openSourceNote,
+                      onTap: () => _openSourceNote(_sourceNote!),
                     ),
                   ),
                 if (_question?.isManuallyEdited == true)

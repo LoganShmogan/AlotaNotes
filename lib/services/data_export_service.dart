@@ -33,10 +33,15 @@ class DataExportService {
 
   /// Builds the export as an in-memory file, ready to hand to a share
   /// sheet (which on web falls back to a browser download).
-  Future<XFile> exportFile() async {
+  ///
+  /// The name is returned separately because `XFile.fromData` only keeps it
+  /// on web; elsewhere the share sheet needs it via `fileNameOverrides`, or
+  /// the file goes out under a random UUID name.
+  Future<({XFile file, String name})> exportFile() async {
     final data = await buildExport();
     final timestamp = DateTime.now().toUtc().toIso8601String().replaceAll(RegExp(r'[:.]'), '-');
+    final name = 'quizapp-export-$timestamp.json';
     final bytes = utf8.encode(const JsonEncoder.withIndent('  ').convert(data));
-    return XFile.fromData(bytes, mimeType: 'application/json', name: 'quizapp-export-$timestamp.json');
+    return (file: XFile.fromData(bytes, mimeType: 'application/json', name: name), name: name);
   }
 }

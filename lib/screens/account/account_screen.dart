@@ -60,6 +60,7 @@ class _AccountScreenState extends State<AccountScreen> {
       model: _modelController.text.trim(),
       baseUrl: _baseUrlController.text.trim().isEmpty ? null : _baseUrlController.text.trim(),
     ));
+    if (!mounted) return;
     setState(() => _saved = true);
   }
 

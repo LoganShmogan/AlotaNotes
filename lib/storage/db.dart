@@ -29,22 +29,9 @@ DateTime utcNow() => DateTime.now().toUtc();
 /// `dart run sqflite_common_ffi_web:setup`), and Windows/Linux use the FFI
 /// build of SQLite.
 Future<Database> openAppDatabase() async {
-  final DatabaseFactory factory;
-  final String dbPath;
-  if (kIsWeb) {
-    factory = databaseFactoryFfiWeb;
-    dbPath = 'quizapp.db';
-  } else {
-    if (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux) {
-      sqfliteFfiInit();
-      factory = databaseFactoryFfi;
-    } else {
-      factory = databaseFactorySqflitePlugin;
-    }
-    final directory = await getApplicationDocumentsDirectory();
-    dbPath = join(directory.path, 'quizapp.db');
-  }
-  return factory.openDatabase(
+  // No filesystem in a browser: the web factory takes a bare name.
+  final dbPath = kIsWeb ? 'quizapp.db' : join((await getApplicationDocumentsDirectory()).path, 'quizapp.db');
+  return appDatabaseFactory().openDatabase(
     dbPath,
     options: OpenDatabaseOptions(
       version: 1,
@@ -56,6 +43,19 @@ Future<Database> openAppDatabase() async {
       },
     ),
   );
+}
+
+/// Picks the SQLite backend for a platform. Split out of `openAppDatabase`
+/// so every branch can be unit-tested from the VM: `kIsWeb` is a
+/// compile-time constant, so the web branch is otherwise unreachable there.
+DatabaseFactory appDatabaseFactory({bool isWeb = kIsWeb, TargetPlatform? platform}) {
+  if (isWeb) return databaseFactoryFfiWeb;
+  final target = platform ?? defaultTargetPlatform;
+  if (target == TargetPlatform.windows || target == TargetPlatform.linux) {
+    sqfliteFfiInit();
+    return databaseFactoryFfi;
+  }
+  return databaseFactorySqflitePlugin;
 }
 
 const List<String> schemaStatements = [

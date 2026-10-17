@@ -100,6 +100,7 @@ class _QuizScreenState extends State<QuizScreen> {
       askedAt: answeredAt,
     );
 
+    if (!mounted) return;
     setState(() {
       _submitted = true;
       _wasCorrect = isCorrect;

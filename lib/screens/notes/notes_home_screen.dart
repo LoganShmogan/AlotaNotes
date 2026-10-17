@@ -28,8 +28,11 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
 
   Future<void> _refresh() async {
     final folders = await _foldersRepo.listChildren(null);
-    if (mounted) setState(() => _folders = folders);
-    setState(() => _loading = false);
+    if (!mounted) return;
+    setState(() {
+      _folders = folders;
+      _loading = false;
+    });
   }
 
   Future<void> _createFolder() async {

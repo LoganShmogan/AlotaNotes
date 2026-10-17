@@ -12,10 +12,15 @@ import '../../storage/notes_repo.dart';
 import '../../storage/questions_repo.dart';
 import 'note_questions_screen.dart';
 
+typedef ProviderBuilder = AIProvider Function(String providerName, String apiKey, String model, String? baseUrl);
+
 class NoteEditorScreen extends StatefulWidget {
   final Database db;
   final int noteId;
-  const NoteEditorScreen({super.key, required this.db, required this.noteId});
+  // Injectable so widget tests can generate questions without a real HTTP
+  // call; the app always uses the default.
+  final ProviderBuilder providerBuilder;
+  const NoteEditorScreen({super.key, required this.db, required this.noteId, this.providerBuilder = buildProvider});
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -86,7 +91,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         throw const AIProviderError('No API key configured. Add one in the Account tab.');
       }
       final settings = await _settingsStore.load();
-      final provider = buildProvider(settings.provider, apiKey, settings.model, settings.baseUrl);
+      final provider = widget.providerBuilder(settings.provider, apiKey, settings.model, settings.baseUrl);
       final service = QuestionGenerationService(
         notesRepo: _notesRepo,
         questionsRepo: _questionsRepo,

@@ -51,14 +51,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       baseUrl: settings.baseUrl,
       defaultQuestionFormat: format,
     ));
+    if (!mounted) return;
     setState(() => _defaultFormat = format);
   }
 
   Future<void> _exportData() async {
     setState(() => _exporting = true);
     try {
-      final file = await DataExportService(widget.db).exportFile();
-      await Share.shareXFiles([file], text: 'Quiz App AI data export');
+      final export = await DataExportService(widget.db).exportFile();
+      await Share.shareXFiles([export.file], fileNameOverrides: [export.name], text: 'Quiz App AI data export');
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
