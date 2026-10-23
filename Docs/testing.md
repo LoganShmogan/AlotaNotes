@@ -9,6 +9,47 @@ flutter test
 
 175 tests, all passing as of the last work session.
 
+## End-to-end (integration) test
+
+```bash
+flutter test integration_test -d linux
+```
+
+`integration_test/app_flows_test.dart` builds and launches the real app on
+Linux desktop and drives one full session through the UI: wrong then right
+sign-in, AI provider setup on the Account tab, creating a subject and a
+note, generating questions, editing one, bulk importing two files, taking
+the quiz (one right, one wrong answer), changing the default question
+format, exporting, then signing out and back in to check everything
+persisted.
+
+What's real and what isn't:
+
+- **Real**: the SQLite database file (FFI), `shared_preferences`,
+  `flutter_secure_storage` (libsecret, your actual keyring), and HTTP. The
+  AI provider is pointed, through the Account screen's base URL field, at a
+  local `HttpServer` that speaks the OpenAI Chat Completions format, so no
+  API key or network is needed. The test also checks the request it sent
+  (bearer key, model, note text).
+- **Faked**: `path_provider` points at a temp dir, because on Linux the
+  app's documents directory is `~/Documents` and the test must never touch
+  your real `quizapp.db`. The file picker and share sheet are native OS
+  dialogs a test can't click, so they're faked at their platform interface.
+- **Restored**: the API key and settings you had before the run are put
+  back afterwards.
+- **One shortcut**: new questions are first due a day after creation. The
+  test moves their due dates into the past, through the same database file
+  the app has open, to stand in for that day passing.
+
+It needs the Linux desktop toolchain:
+
+```bash
+sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev liblzma-dev
+```
+
+Nothing here counts towards the coverage number above; `flutter test
+--coverage` only runs `test/`.
+
 ## Coverage
 
 Every line in `lib/` is covered (1042/1042 lines). To check:
@@ -33,6 +74,8 @@ one side ever runs. The one place that matters here is listed under
 ## Structure
 
 ```
+integration_test/
+└── app_flows_test.dart                # one full session on Linux desktop, see above
 test/
 ├── helpers/
 │   └── test_env.dart                  # shared DB setup, plugin fakes, async polling helpers
@@ -172,9 +215,14 @@ supposed to.
   `db_test.dart` asserts). The web build is checked by building and serving
   it instead: `flutter build web` and the Docker image (see `hosting.md`).
   Neither of those exercises the app's behaviour in a real browser.
-- **No automated end-to-end test on a real device or emulator.** The
-  ADB-tap approach was tried and found unreliable (see above). Every screen
-  and the navigation between them now has widget tests, but real platform
-  behaviour (the native file picker, share sheet, keychain, and on-device
-  SQLite) is still only checked by hand. That's a real gap worth a proper
-  `integration_test` setup eventually, not a solved problem.
+- **End-to-end on mobile.** The integration test runs on Linux desktop
+  only. It should also run on an Android emulator or phone (`-d <device>`),
+  but that hasn't been tried, and it would write the API key and settings
+  into that device's real stores rather than a test copy. The ADB-tap
+  approach was tried and found unreliable (see above).
+- **Native dialogs.** The file picker and share sheet are faked even in the
+  integration test, so opening and dismissing the real OS dialogs is still
+  only checked by hand.
+- **The integration test hasn't been run yet.** It was written on a machine
+  without the Linux desktop toolchain. Run it once the packages above are
+  installed, and remove this line when it passes.

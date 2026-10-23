@@ -54,6 +54,16 @@ checks it. See `Docs/testing.md` for why the device-input distinction
 matters: it's the difference between a test that's actually reliable and one
 that isn't, and this project hit that difference the hard way once already.
 
+There's also one end-to-end test that runs the real app on Linux desktop
+(real SQLite file, real settings and keychain, real HTTP to a local fake AI
+server), from sign-in through quiz, import and export:
+
+```bash
+flutter test integration_test -d linux
+```
+
+It needs the Linux desktop toolchain installed; see `Docs/testing.md`.
+
 ## Documentation
 
 Everything needed to understand and extend this codebase lives in `Docs/`:
@@ -74,6 +84,8 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
   triggered automatically on a GitHub release
 - `hosting.md`, the web build in Docker, and putting it behind a reverse
   proxy at alotanotes.savepoint.co.nz
+- `pdf/`, the docs above as Save Point branded PDFs, rebuilt with
+  `dart run tool/build_docs.dart`
 - `future_work.md`, known, deliberate deferrals: what's blocked on things
   only a human can provide (developer accounts, real devices, brand assets),
   and what's just not built yet
