@@ -1,4 +1,4 @@
-// App entry, auth gate, login, the four-tab RootShell, and the Account
+// App entry, auth gate, login, the five-tab RootShell, and the Account
 // screen. Anything that reaches RootShell runs with the platform set to
 // Linux, so the real openAppDatabase() opens an FFI SQLite file in the
 // fake documents directory instead of calling the sqflite plugin.
@@ -10,12 +10,17 @@ import 'package:quizapp/auth/auth_service.dart';
 import 'package:quizapp/main.dart' as app;
 import 'package:quizapp/screens/account/account_screen.dart';
 import 'package:quizapp/screens/login/login_screen.dart';
+import 'package:quizapp/core/models.dart';
 import 'package:quizapp/screens/notes/notes_home_screen.dart';
-import 'package:quizapp/screens/quiz/quiz_screen.dart';
 import 'package:quizapp/screens/root_shell.dart';
 import 'package:quizapp/screens/settings/settings_screen.dart';
+import 'package:quizapp/screens/today/today_screen.dart';
+import 'package:quizapp/screens/tracker/problems_screen.dart';
+import 'package:quizapp/services/reminder_service.dart';
 import 'package:quizapp/settings/app_settings.dart';
+import 'package:quizapp/theme/theme.dart';
 
+import '../helpers/fake_notifications.dart';
 import '../helpers/test_env.dart';
 
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
@@ -47,7 +52,7 @@ void main() {
 
         await waitForLoad(tester);
         expect(find.byType(LoginScreen), findsOneWidget);
-        expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.scaffoldBackgroundColor, Colors.black);
+        expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.scaffoldBackgroundColor, colorPaper);
       });
     });
 
@@ -57,7 +62,7 @@ void main() {
         await waitForLoad(tester);
 
         expect(find.byType(RootShell), findsOneWidget);
-        expect(find.byType(NotesHomeScreen), findsOneWidget);
+        expect(find.byType(TodayScreen), findsOneWidget);
       });
     }, variant: linux);
   });
@@ -110,24 +115,51 @@ void main() {
   });
 
   group('RootShell', () {
-    testWidgets('opens the app database, then switches between the four tabs', (tester) async {
+    Finder tab(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+
+    testWidgets('opens the app database, then switches between the five tabs', (tester) async {
       await tester.runAsync(() async {
         await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedIn())));
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
         await waitForLoad(tester);
 
-        expect(find.byType(NotesHomeScreen), findsOneWidget);
+        expect(find.byType(TodayScreen), findsOneWidget);
         for (final (label, screen) in [
-          ('Quiz', QuizScreen),
+          ('Notes', NotesHomeScreen),
+          ('Tracker', ProblemsScreen),
           ('Account', AccountScreen),
           ('Settings', SettingsScreen),
-          ('Notes', NotesHomeScreen),
+          ('Today', TodayScreen),
         ]) {
-          await tester.tap(find.descendant(of: find.byType(BottomNavigationBar), matching: find.text(label)));
+          await tester.tap(tab(label));
           await waitForLoad(tester);
           expect(find.byType(screen), findsOneWidget, reason: label);
         }
         expect(documentsDir.listSync().map((f) => f.path.split('/').last), contains('quizapp.db'));
+      });
+    }, variant: linux);
+
+    testWidgets('syncs reminders on open and after study changes elsewhere', (tester) async {
+      await tester.runAsync(() async {
+        final fake = useFakeNotifications(FakeAndroidNotifications());
+        await const AppSettingsStore().save(const AppSettings(remindersEnabled: true));
+        final reminders = ReminderService(delivery: ReminderDelivery.scheduled);
+        await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedIn(), reminders: reminders)));
+        await waitForLoad(tester);
+        await pumpUntil(tester, () => fake.cancelAllCalls == 1);
+
+        // Adding a problem on the Tracker tab re-plans reminders and shows up on Today.
+        await tester.tap(tab('Tracker'));
+        await waitForLoad(tester);
+        await tester.tap(find.text('Add a problem'));
+        await settleNavigation(tester);
+        await tester.enterText(find.byType(TextField).first, 'Two Sum');
+        await tester.tap(find.byIcon(Icons.save));
+        await settleNavigation(tester);
+        await tester.pageBack();
+        await settleNavigation(tester);
+        await pumpUntil(tester, () => fake.cancelAllCalls == 2);
+        expect(find.text('Two Sum'), findsOneWidget);
       });
     }, variant: linux);
   });
@@ -186,6 +218,23 @@ void main() {
         expect(await const FlutterSecureStorage().read(key: 'ai_api_key'), 'sk-new');
         final settings = await const AppSettingsStore().load();
         expect((settings.provider, settings.model, settings.baseUrl), ('anthropic', 'claude-haiku-5-5', 'https://proxy.example.com'));
+      });
+    });
+
+    testWidgets('Save keeps Settings-tab choices it does not own', (tester) async {
+      await tester.runAsync(() async {
+        await const AppSettingsStore().save(const AppSettings(
+          defaultQuestionFormat: questionTypeMultipleChoice,
+          remindersEnabled: true,
+          desiredRetention: 0.8,
+        ));
+        await show(tester);
+
+        await tester.tap(find.text('Save'));
+        await pumpUntil(tester, () => find.text('Saved').evaluate().isNotEmpty);
+        final settings = await const AppSettingsStore().load();
+        expect((settings.defaultQuestionFormat, settings.remindersEnabled, settings.desiredRetention),
+            (questionTypeMultipleChoice, true, 0.8));
       });
     });
 

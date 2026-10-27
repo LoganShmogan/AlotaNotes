@@ -1,11 +1,11 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../core/models.dart';
+import '../core/scheduling.dart';
 import 'db.dart';
 
-/// Not wired to any AI generation yet (that's a separate future slice) --
-/// this exists so the Quiz tab has a real (currently empty) data source
-/// instead of a hardcoded placeholder list.
+/// Quiz questions generated from (or written for) a note, each one an FSRS
+/// card. A new question is due straight away.
 class QuestionsRepo {
   final Database _db;
   const QuestionsRepo(this._db);
@@ -36,9 +36,7 @@ class QuestionsRepo {
       questionType: row['question_type'] as String,
       prompt: row['prompt'] as String,
       expectedAnswer: row['expected_answer'] as String,
-      intervalIndex: row['interval_index'] as int,
-      lastAskedAt: row['last_asked_at'] == null ? null : isoToDt(row['last_asked_at'] as String),
-      nextDueAt: isoToDt(row['next_due_at'] as String),
+      card: srsCardFromRow(row)!,
       createdAt: isoToDt(row['created_at'] as String),
       active: (row['active'] as int) == 1,
       isManuallyEdited: (row['is_manually_edited'] as int) == 1,
@@ -55,15 +53,12 @@ class QuestionsRepo {
     List<(String, bool)>? choices,
   }) async {
     final createdAt = now ?? utcNow();
-    // New questions are not due immediately -- first review is 1 day out.
-    final nextDueAt = createdAt.add(const Duration(days: 1));
     final id = await _db.insert('questions', {
       'note_id': noteId,
       'question_type': questionType,
       'prompt': prompt,
       'expected_answer': expectedAnswer,
-      'interval_index': 0,
-      'next_due_at': dtToIso(nextDueAt),
+      ...srsCardToRow(newCard(createdAt)),
       'created_at': dtToIso(createdAt),
       'active': 1,
     });
@@ -91,6 +86,12 @@ class QuestionsRepo {
 
   Future<List<Question>> listByNote(int noteId) async {
     final rows = await _db.query('questions', where: 'note_id = ?', whereArgs: [noteId], orderBy: 'id');
+    return Future.wait(rows.map(_rowToQuestion));
+  }
+
+  /// Every active question, for retention stats.
+  Future<List<Question>> listActive() async {
+    final rows = await _db.query('questions', where: 'active = 1', orderBy: 'id');
     return Future.wait(rows.map(_rowToQuestion));
   }
 
@@ -137,22 +138,8 @@ class QuestionsRepo {
     return get(id);
   }
 
-  Future<Question> updateScheduling(
-    int id, {
-    required int intervalIndex,
-    required DateTime lastAskedAt,
-    required DateTime nextDueAt,
-  }) async {
-    await _db.update(
-      'questions',
-      {
-        'interval_index': intervalIndex,
-        'last_asked_at': dtToIso(lastAskedAt),
-        'next_due_at': dtToIso(nextDueAt),
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<Question> updateScheduling(int id, SrsCard card) async {
+    await _db.update('questions', srsCardToRow(card), where: 'id = ?', whereArgs: [id]);
     return get(id);
   }
 }

@@ -1,47 +1,69 @@
 # Visual Theming
 
-`lib/theme/theme.dart` is the single source of truth for the app's visual
-design; screens reference named color constants from here rather than
-hardcoding hex codes, so a future palette tweak touches one file.
+`lib/theme/theme.dart` is the single source of truth for the app's look;
+`lib/theme/widgets.dart` holds the few branded building blocks a
+`ThemeData` can't express. Screens use the named constants and widgets,
+never raw hex codes.
 
-## Palette
+## Source
 
-Ported directly from the earlier Python desktop app's palette, which itself
-claims to match the savepoint.cc brand:
+The tokens are taken directly from the live savepoint.co.nz stylesheet
+(its CSS custom properties, fetched in October 2026), not guessed. The site
+is a light, "neo-brutalist" retro design:
 
-| Constant | Hex | Usage |
-|---|---|---|
-| `colorPurple` | `#B791C2` | Primary accent, card fills, buttons |
-| `colorYellow` | `#EECC67` | Highlight/emphasis (errors, secondary state) |
-| `colorBlue` | `#699FD5` | Secondary accent |
-| `colorGreen` | `#82C889` | Success, selected-tab indicator |
-| `colorBlack` | `#000000` | Main background |
-| `colorWhite` | `#FFFFFF` | Text, borders |
+| Constant | Hex | Site token | Used for |
+|---|---|---|---|
+| `colorPaper` | `#F7F4EF` | `--paper` | Page background |
+| `colorPaperRaised` | `#FFFFFF` | `--paper-raised` | Cards, inputs |
+| `colorPaperTint` | `#EFE8F2` | `--paper-tint` | Quiet fills, tracks, dividers |
+| `colorInk` | `#221C27` | `--ink` | Text, 3px borders, button shadows |
+| `colorInkSoft` | `#4A4352` | `--ink-soft` | Secondary text |
+| `colorPlum` | `#2B2233` | `--plum` | App bar, nav bar, hero panels |
+| `colorOnPlumSoft` | `#E4DCEA` | `--on-plum-soft` | Secondary text on plum |
+| `colorPurple` | `#B791C2` | `--purple` | Pixel shadows, app-bar underline |
+| `colorPurpleDeep` | `#5B3D6B` | `--purple-deep` | Primary accent, links, labels |
+| `colorYellow` | `#EECC67` | `--yellow` | Primary buttons, selection, "due" |
+| `colorBlue` | `#699FD5` | `--blue` | "Attempted", problem stats |
+| `colorGreen` | `#82C88A` | `--green` | "Solved", easy, correct answers |
+| `colorDanger` | `#B3261E` | (none) | Errors, wrong answers |
 
-**Not yet verified against the real savepoint.cc site.** A text-only fetch
-during planning confirmed a retro/pixel-art aesthetic consistent in spirit
-with this palette, but couldn't extract real hex codes or fonts from it.
-Treat this palette as a reasonable starting point carried over from the
-Python app, not a confirmed brand match. See `future_work.md`.
+`colorDanger` is the only colour not on the site, which never shows an
+error state.
 
-## Aesthetic
+## Shape and depth
 
-Dark, flat, thick borders, zero corner radius: built via `ThemeData` with
-`useMaterial3: true`, `brightness: Brightness.dark`, and explicit
-`CardThemeData`/`ElevatedButtonThemeData`/`InputDecorationTheme` overrides
-using `RoundedRectangleBorder(borderRadius: BorderRadius.zero, side:
-BorderSide(color: colorWhite, width: borderWidth))` wherever a card or button
-would otherwise get rounded corners and a colored fill by default.
+- Square corners everywhere, with 3px ink borders (`inkBorder`).
+- No blurred elevation. Depth is a solid offset "pixel shadow"
+  (`pixelShadow()`, the site's `--pixel-shadow: 6px 6px 0 var(--purple)`).
+- The app bar is plum with a 4px purple underline and the nav bar is plum
+  with a yellow selected tab, like the site's header.
+- Primary actions use `PixelButton`: yellow, ink border, 4px ink shadow,
+  pressing in to 2px while held (the site's `button:hover` effect).
+- `PixelCard` is a white panel with an ink border and an offset shadow. It
+  wraps its content in a transparent `Material` so ink from tiles inside
+  paints correctly. The shadow colour carries meaning: a yellow shadow on a
+  tracker card means it's due.
 
 ## Fonts
 
-No custom font bundling yet. The app currently uses Flutter's default
-Material font stack. The Python desktop app bundles Chakra Petch (headings)
-and Figtree (body) with per-OS registration logic; that hasn't been ported,
-partly because it depends on the same unverified brand-asset question above.
-See `future_work.md`.
+Bundled in `assets/fonts/` (SIL OFL, licences alongside), so text never
+depends on a network fetch:
 
-## Adding a new named style
+- **Chakra Petch** (SemiBold, Bold): headings, app-bar titles, buttons,
+  chips, pills and section labels (`fontDisplay`).
+- **Figtree** (Regular, Medium, SemiBold, Bold): body text (`fontBody`, the
+  theme default).
 
-Add the style to `buildAppTheme()` in `theme.dart`, referencing the palette
-constants above. Don't hardcode hex codes in screen files.
+Code (problem solutions) uses the platform `monospace` family.
+
+## Widgets in `widgets.dart`
+
+`PixelCard`, `PixelButton`, `Pill`, `DifficultyPill`, `StatusPill`,
+`StatTile`, `SectionLabel` (uppercase eyebrow text), `EmptyState`,
+`RetentionMeter`.
+
+## Adding a style
+
+Add it to `buildAppTheme()` using the constants above, or add a small
+widget to `widgets.dart` if it needs pixel shadows. Don't hardcode hex
+codes in screens. There is no dark mode, matching the site.

@@ -6,6 +6,8 @@ import '../../core/models.dart';
 import '../../core/text_extraction.dart';
 import '../../storage/folders_repo.dart';
 import '../../storage/notes_repo.dart';
+import '../../theme/theme.dart';
+import '../../theme/widgets.dart';
 import 'bulk_import_staging_screen.dart';
 import 'dialogs.dart';
 import 'note_editor_screen.dart';
@@ -99,30 +101,41 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : (_subfolders.isEmpty && _notes.isEmpty)
-              ? const Center(child: Text('Empty. Use + to add a folder or note.'))
+              ? const EmptyState(icon: Icons.note_add_outlined, message: 'Empty. Use + to add a folder or note.')
               : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
                   children: [
                     for (final folder in _subfolders)
-                      ListTile(
-                        leading: const Icon(Icons.folder),
-                        title: Text(folder.name),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _openFolder(folder),
+                      Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.folder),
+                          title: Text(folder.name),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _openFolder(folder),
+                        ),
                       ),
                     for (final note in _notes)
-                      ListTile(
-                        leading: const Icon(Icons.description_outlined),
-                        title: Text(note.title),
-                        subtitle: Text(
-                          note.body.isEmpty ? '(empty)' : note.body,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.description_outlined),
+                          title: Text(note.title),
+                          subtitle: Text(
+                            note.body.isEmpty ? '(empty)' : note.body,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => _openNote(note),
                         ),
-                        onTap: () => _openNote(note),
                       ),
                   ],
                 ),
       floatingActionButton: PopupMenuButton<String>(
+        style: IconButton.styleFrom(
+          backgroundColor: colorYellow,
+          foregroundColor: colorInk,
+          shape: const RoundedRectangleBorder(side: inkBorder),
+          minimumSize: const Size(56, 56),
+        ),
         icon: const Icon(Icons.add),
         onSelected: (choice) {
           if (choice == 'folder') _createSubfolder();

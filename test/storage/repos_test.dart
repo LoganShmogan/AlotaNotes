@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:quizapp/core/models.dart';
+import 'package:quizapp/core/scheduling.dart';
 import 'package:quizapp/storage/db.dart';
 import 'package:quizapp/storage/folders_repo.dart';
 import 'package:quizapp/storage/notes_repo.dart';
@@ -108,16 +109,35 @@ void main() {
       final question = await QuestionsRepo(db).create(note.id, questionTypeShortAnswer, 'Q', 'A');
       final reviews = ReviewsRepo(db);
 
-      await reviews.record(question.id, 'wrong', false, 0, 0, gradingMethodKeywordMatch,
+      final first = reviewCard(question.card, ReviewRating.again, DateTime.utc(2026, 1, 1));
+      await reviews.record(question.id, 'wrong', false, ReviewRating.again, gradingMethodKeywordMatch, first,
           askedAt: DateTime.utc(2026, 1, 1));
-      await reviews.record(question.id, 'A', true, 0, 1, gradingMethodExactMatch,
+      final second = reviewCard(first, ReviewRating.easy, DateTime.utc(2026, 1, 2));
+      await reviews.record(question.id, 'A', true, ReviewRating.easy, gradingMethodExactMatch, second,
           askedAt: DateTime.utc(2026, 1, 2));
 
       final history = await reviews.listForQuestion(question.id);
       expect(history, hasLength(2));
-      expect(history[0].isCorrect, isFalse);
-      expect(history[1].isCorrect, isTrue);
-      expect(history[1].intervalIndexAfter, 1);
+      expect((history[0].isCorrect, history[0].rating), (false, ReviewRating.again));
+      expect((history[1].isCorrect, history[1].rating), (true, ReviewRating.easy));
+      expect(history[1].nextDueAfter, second.due);
+      expect(history[1].stabilityAfter, second.stability);
+    });
+
+    test('countSince counts answers at or after the cutoff', () async {
+      final db = await _openTestDatabase();
+      final folder = await FoldersRepo(db).create('Physics');
+      final note = await NotesRepo(db).create(folder.id, 'Note', 'body');
+      final question = await QuestionsRepo(db).create(note.id, questionTypeShortAnswer, 'Q', 'A');
+      final reviews = ReviewsRepo(db);
+      for (final day in [1, 2, 3]) {
+        final at = DateTime.utc(2026, 1, day);
+        await reviews.record(question.id, 'A', true, ReviewRating.good, gradingMethodExactMatch,
+            reviewCard(question.card, ReviewRating.good, at),
+            askedAt: at);
+      }
+      expect(await reviews.countSince(DateTime.utc(2026, 1, 2)), 2);
+      expect(await reviews.countSince(DateTime.utc(2026, 2, 1)), 0);
     });
   });
 
@@ -232,10 +252,10 @@ void main() {
       questions = QuestionsRepo(db);
     });
 
-    test('new questions start at interval 0, first due one day after creation', () async {
+    test('new questions are brand-new FSRS cards, due straight away', () async {
       final q = await questions.create(noteId, questionTypeShortAnswer, 'Q', 'A', now: DateTime.utc(2026, 1, 1));
-      expect(q.intervalIndex, 0);
-      expect(q.nextDueAt, DateTime.utc(2026, 1, 2));
+      expect((q.card.state, q.card.step, q.card.stability), (srsStateLearning, 0, null));
+      expect(q.nextDueAt, DateTime.utc(2026, 1, 1));
       expect(q.createdAt, DateTime.utc(2026, 1, 1));
       expect(q.lastAskedAt, isNull);
       expect(q.active, isTrue);
@@ -278,6 +298,7 @@ void main() {
 
       final due = await questions.listDue(DateTime.utc(2026, 1, 5));
       expect(due.map((q) => q.prompt), ['Earlier', 'Later']);
+      expect((await questions.listActive()).map((q) => q.prompt), ['Later', 'Earlier', 'Not yet']);
     });
 
     test('updateContent without choices leaves existing choices alone', () async {
@@ -286,23 +307,28 @@ void main() {
       expect(updated.choices.single.choiceText, 'A');
     });
 
-    test('updateScheduling stores the new interval, last-asked and due times', () async {
+    test('updateScheduling stores the whole FSRS card', () async {
       final q = await questions.create(noteId, questionTypeShortAnswer, 'Q', 'A');
-      final updated = await questions.updateScheduling(
-        q.id,
-        intervalIndex: 3,
-        lastAskedAt: DateTime.utc(2026, 4, 1),
-        nextDueAt: DateTime.utc(2026, 4, 6),
+      final card = SrsCard(
+        state: srsStateReview,
+        stability: 12.5,
+        difficulty: 4.2,
+        due: DateTime.utc(2026, 4, 13),
+        lastReview: DateTime.utc(2026, 4, 1),
       );
-      expect(updated.intervalIndex, 3);
+      final updated = await questions.updateScheduling(q.id, card);
+      expect(
+        (updated.card.state, updated.card.step, updated.card.stability, updated.card.difficulty),
+        (srsStateReview, null, 12.5, 4.2),
+      );
       expect(updated.lastAskedAt, DateTime.utc(2026, 4, 1));
-      expect(updated.nextDueAt, DateTime.utc(2026, 4, 6));
+      expect(updated.nextDueAt, DateTime.utc(2026, 4, 13));
     });
 
-    test('the schema rejects an interval index outside the 7-step sequence', () async {
+    test('the schema rejects an FSRS state that does not exist', () async {
       final q = await questions.create(noteId, questionTypeShortAnswer, 'Q', 'A');
       expect(
-        () => questions.updateScheduling(q.id, intervalIndex: 7, lastAskedAt: utcNow(), nextDueAt: utcNow()),
+        () => questions.updateScheduling(q.id, SrsCard(state: 4, due: utcNow())),
         throwsA(isA<DatabaseException>()),
       );
     });
@@ -316,11 +342,12 @@ void main() {
       final question = await QuestionsRepo(db).create(note.id, questionTypeMultipleChoice, 'Q', 'A');
 
       final before = utcNow();
-      final review = await ReviewsRepo(db).record(question.id, 'A', true, 0, 1, gradingMethodMcqExact);
+      final review = await ReviewsRepo(db)
+          .record(question.id, 'A', true, ReviewRating.good, gradingMethodMcqExact, question.card);
       expect(review.askedAt.isBefore(before), isFalse);
       expect(review.givenAnswer, 'A');
       expect(review.gradingMethod, gradingMethodMcqExact);
-      expect(review.intervalIndexBefore, 0);
+      expect(review.stabilityAfter, isNull);
     });
   });
 }

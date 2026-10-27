@@ -15,18 +15,20 @@ class ReviewsRepo {
         askedAt: isoToDt(row['asked_at'] as String),
         givenAnswer: row['given_answer'] as String,
         isCorrect: (row['is_correct'] as int) == 1,
-        intervalIndexBefore: row['interval_index_before'] as int,
-        intervalIndexAfter: row['interval_index_after'] as int,
+        rating: ReviewRating.fromValue(row['rating'] as int),
         gradingMethod: row['grading_method'] as String,
+        nextDueAfter: isoToDt(row['next_due_after'] as String),
+        stabilityAfter: (row['stability_after'] as num?)?.toDouble(),
       );
 
+  /// [after] is the question's card once this review has been applied.
   Future<ReviewRecord> record(
     int questionId,
     String givenAnswer,
     bool isCorrect,
-    int intervalIndexBefore,
-    int intervalIndexAfter,
-    String gradingMethod, {
+    ReviewRating rating,
+    String gradingMethod,
+    SrsCard after, {
     DateTime? askedAt,
   }) async {
     final asked = askedAt ?? utcNow();
@@ -35,9 +37,10 @@ class ReviewsRepo {
       'asked_at': dtToIso(asked),
       'given_answer': givenAnswer,
       'is_correct': isCorrect ? 1 : 0,
-      'interval_index_before': intervalIndexBefore,
-      'interval_index_after': intervalIndexAfter,
+      'rating': rating.value,
       'grading_method': gradingMethod,
+      'next_due_after': dtToIso(after.due),
+      'stability_after': after.stability,
     });
     final rows = await _db.query('question_history', where: 'id = ?', whereArgs: [id]);
     return _rowToReview(rows.first);
@@ -51,5 +54,14 @@ class ReviewsRepo {
       orderBy: 'asked_at',
     );
     return rows.map(_rowToReview).toList();
+  }
+
+  /// How many answers were given at or after [since].
+  Future<int> countSince(DateTime since) async {
+    final rows = await _db.rawQuery(
+      'SELECT COUNT(*) AS n FROM question_history WHERE asked_at >= ?',
+      [dtToIso(since)],
+    );
+    return rows.first['n'] as int;
   }
 }

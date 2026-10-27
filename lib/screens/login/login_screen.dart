@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/auth_service.dart';
+import '../../services/reminder_service.dart';
+import '../../theme/theme.dart';
+import '../../theme/widgets.dart';
 import '../root_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   final AuthService authService;
-  const LoginScreen({super.key, required this.authService});
+  final ReminderService? reminders;
+  const LoginScreen({super.key, required this.authService, this.reminders});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -34,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 100));
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => RootShell(authService: widget.authService)),
+        MaterialPageRoute(builder: (_) => RootShell(authService: widget.authService, reminders: widget.reminders)),
       );
     } on AuthException catch (e) {
       setState(() => _error = e.message);
@@ -61,9 +65,15 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Quiz App', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 32),
+                  Text('Quiz App AI', style: Theme.of(context).textTheme.displaySmall),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Notes, quizzes and a problem tracker that remind you right before you forget.',
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: colorInkSoft),
+                  ),
+                  const SizedBox(height: 28),
                   TextField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: 'Username'),
@@ -78,15 +88,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 16),
-                    Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ],
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _submitting ? null : _submit,
-                      child: Text(_submitting ? 'Signing in...' : 'Sign in'),
-                    ),
+                  PixelButton(
+                    label: _submitting ? 'Signing in...' : 'Sign in',
+                    onPressed: _submitting ? null : _submit,
                   ),
                 ],
               ),

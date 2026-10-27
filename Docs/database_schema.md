@@ -1,14 +1,27 @@
 # Database Schema
 
-Single local SQLite database (`lib/storage/db.dart` holds the full DDL as a
-list of statements, applied once via `sqflite`'s `onCreate` callback).
-`PRAGMA foreign_keys = ON` is set on every connection, so all `ON DELETE
-CASCADE` relationships below are enforced.
+Single local SQLite database. `lib/storage/db.dart` holds the full DDL as a
+list of statements (`schemaStatements`), applied by `sqflite`'s `onCreate`
+on a fresh install. **Schema version 2** (`schemaVersion`); older databases
+are upgraded in place by `migrateSchema()` (see below).
 
-All timestamp columns are `TEXT`, stored as UTC ISO-8601 strings
-(`DateTime.toUtc().toIso8601String()`). Repos always compute timestamps in
-Dart (never rely on a SQL-side default), so serialization is deterministic
-and easy to assert on in tests.
+`PRAGMA foreign_keys = ON` is set in `onOpen`, after any upgrade, so every
+`ON DELETE CASCADE` below is enforced. It's deliberately not set in
+`onConfigure`: the v1 to v2 migration rebuilds tables and must run with
+foreign keys off.
+
+All timestamps are `TEXT`, UTC ISO-8601, always computed in Dart (never a
+SQL default).
+
+## FSRS columns
+
+`questions` and `problems` share the same five FSRS columns (`_srsColumns`),
+read and written only through `srsCardToRow()` / `srsCardFromRow()`:
+
+`fsrs_state (1|2|3, checked), fsrs_step, fsrs_stability, fsrs_difficulty,
+last_reviewed_at`, plus `next_due_at`.
+
+See `scheduling_algorithm.md` for what they mean.
 
 ## Tables
 
@@ -19,46 +32,62 @@ and easy to assert on in tests.
 `id, folder_id -> folders.id (cascade), title, body, source_filename
 (nullable), sort_order (default 0), created_at, updated_at`
 
-`sort_order` exists specifically so bulk-import's drag-to-reorder step means
-something after the fact: `NotesRepo.listByFolder()` orders by `sort_order`
-first, falling back to `title` for notes that share the default value (e.g.
-ones created individually rather than through bulk import).
+`sort_order` makes bulk import's drag-to-reorder step stick:
+`NotesRepo.listByFolder()` orders by it, then by `title`.
 
-**`questions`**: one row per generated (or manually edited) quiz question.
-`interval_index` (0 to 6, checked) is the single source of truth for
-scheduling; see `scheduling_algorithm.md`.
+**`questions`**: one row per generated (or edited) quiz question, each an
+FSRS card. `next_due_at` is `NOT NULL`: a new question is due at once.
 `id, note_id -> notes.id (cascade), question_type ('short_answer' |
-'multiple_choice'), prompt, expected_answer, interval_index (0-6),
-last_asked_at (nullable), next_due_at, created_at, active (0|1),
-is_manually_edited (0|1)`
+'multiple_choice'), prompt, expected_answer, <FSRS columns>, next_due_at,
+created_at, active (0|1), is_manually_edited (0|1)`
 
-Questions are soft-deletable in principle (`active` exists for exactly that),
-though nothing in the app currently sets it to 0. See `future_work.md`.
-
-**`question_choices`**: multiple-choice options only; empty for short-answer
-questions.
+**`question_choices`**: multiple-choice options only.
 `id, question_id -> questions.id (cascade), choice_text, is_correct (0|1),
 sort_order`
 
-**`question_history`**: append-only audit trail of every answer ever given.
-Never updated or deleted by the repo layer (`ReviewsRepo` has no
-update()/delete() method at all). This is the source of truth for future
-per-question/per-folder accuracy stats; `interval_index` alone can't
-reconstruct history since it's overwritten on every review.
+**`question_history`**: append-only log of every answer (`ReviewsRepo` has
+no update or delete).
 `id, question_id -> questions.id (cascade), asked_at, given_answer,
-is_correct (0|1), interval_index_before, interval_index_after,
-grading_method ('exact_match' | 'keyword_match' | 'mcq_exact')`
+is_correct (0|1), rating (1-4), grading_method ('exact_match' |
+'keyword_match' | 'mcq_exact'), next_due_after, stability_after (nullable)`
+
+**`problems`**: the LeetCode-style tracker. The FSRS columns and
+`next_due_at` stay NULL until the first attempt, so an untried problem is
+never due. Tags are one comma-separated, lowercased string.
+`id, title, url (nullable), platform, difficulty ('easy' | 'medium' |
+'hard'), tags, solution, notes, <FSRS columns>, next_due_at (nullable),
+created_at, updated_at`
+
+**`problem_attempts`**: append-only log of every attempt.
+`id, problem_id -> problems.id (cascade), attempted_at, solved (0|1),
+duration_minutes (nullable, >= 0), rating (1-4), notes, next_due_after,
+stability_after (nullable)`
+
+A problem's status (to do / attempted / solved) isn't stored: `ProblemsRepo`
+derives it from the attempt count and the latest attempt's `solved`, in the
+same query.
+
+## Migration v1 to v2
+
+v1 scheduled questions with `interval_index` (0-6) under a
+`CHECK (... BETWEEN 0 AND 6)` constraint, which SQLite can't drop on every
+Android version. So `questions` and `question_history` are rebuilt: rows
+are read, the tables dropped and recreated with the v2 DDL, and rows copied
+back **with their original ids**, each question converted with
+`cardFromLegacy()`. `question_choices` is untouched, and because foreign
+keys are off during the upgrade, dropping `questions` doesn't cascade into
+it. `problems` and `problem_attempts` are created empty. The migration test
+(`test/storage/db_test.dart`) builds a real v1 file from
+`schemaStatementsV1` and upgrades it through `openAppDatabase()`.
 
 ## Design notes
 
-- No ORM, plain `sqflite` + a thin repository class per table group
-  (`lib/storage/*_repo.dart`). Each repo constructor takes a `Database`
-  (dependency injection), which is what makes real in-memory SQLite fixtures
-  in tests (via `sqflite_common_ffi`) fast and fully isolated.
-- Indexes exist on every foreign key and on `questions.next_due_at` (the hot
-  query path for `QuestionsRepo.listDue()`).
-- No `question_source_notes` many-to-many table (the Python desktop app has
-  one, for AI-generated questions that drew context from multiple linked
-  notes). Not needed yet: this app doesn't have automatic note-linking
-  ported over, so a question only ever has exactly one source note, via its
-  plain `note_id` foreign key. See `future_work.md`.
+- No ORM: plain `sqflite` and one repository class per table group, each
+  taking a `Database` (dependency injection), so tests use real in-memory
+  SQLite via `sqflite_common_ffi`.
+- Indexes exist on every foreign key and on both `next_due_at` columns (the
+  "what's due" queries).
+- `ProblemsRepo.recordAttempt()` updates the card and inserts the attempt in
+  one transaction.
+- No many-to-many `question_source_notes` table: without note-linking, a
+  question has exactly one source note. See `future_work.md`.

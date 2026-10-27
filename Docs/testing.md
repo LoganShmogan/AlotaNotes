@@ -7,7 +7,7 @@ flutter analyze
 flutter test
 ```
 
-175 tests, all passing as of the last work session.
+277 tests, all passing as of the last work session.
 
 ## End-to-end (integration) test
 
@@ -37,9 +37,11 @@ What's real and what isn't:
   dialogs a test can't click, so they're faked at their platform interface.
 - **Restored**: the API key and settings you had before the run are put
   back afterwards.
-- **One shortcut**: new questions are first due a day after creation. The
-  test moves their due dates into the past, through the same database file
-  the app has open, to stand in for that day passing.
+- **No shortcuts on scheduling**: new questions are due straight away
+  under FSRS, so the quiz runs on the real due dates. The test rates one
+  answer Again and overrides the other's suggested Good with Easy, then
+  checks the stored ratings. It also adds a problem on the Tracker tab and
+  logs an attempt.
 
 It needs the Linux desktop toolchain:
 
@@ -52,7 +54,7 @@ Nothing here counts towards the coverage number above; `flutter test
 
 ## Coverage
 
-Every line in `lib/` is covered (1042/1042 lines). To check:
+Every line in `lib/` is covered (1985/1985 lines). To check:
 
 ```bash
 flutter test --coverage
@@ -78,9 +80,11 @@ integration_test/
 └── app_flows_test.dart                # one full session on Linux desktop, see above
 test/
 ├── helpers/
-│   └── test_env.dart                  # shared DB setup, plugin fakes, async polling helpers
+│   ├── test_env.dart                  # shared DB setup, plugin fakes, async polling helpers
+│   └── fake_notifications.dart        # notification plugin fakes (Android/iOS/macOS)
 ├── core/
-│   ├── scheduling_test.dart           # pure function, table-driven cases
+│   ├── scheduling_test.dart           # FSRS wrapper: steps, lapses, previews, recall, legacy cards
+│   ├── reminders_test.dart            # reminder planning, pure
 │   ├── grading_test.dart              # pure function
 │   └── text_extraction_test.dart      # hand-built .docx/.pptx, generated .pdf
 ├── ai/
@@ -94,11 +98,13 @@ test/
 ├── settings/
 │   └── app_settings_test.dart         # in-memory shared_preferences
 ├── storage/
-│   ├── db_test.dart                   # backend selection, real on-disk open
-│   └── repos_test.dart                # real in-memory SQLite via sqflite_common_ffi
+│   ├── db_test.dart                   # backend selection, real on-disk open, v1 -> v2 migration
+│   ├── repos_test.dart                # real in-memory SQLite via sqflite_common_ffi
+│   └── problems_repo_test.dart
 ├── services/
 │   ├── question_generation_service_test.dart  # fake AIProvider
-│   └── data_export_service_test.dart
+│   ├── data_export_service_test.dart
+│   └── reminder_service_test.dart     # scheduled vs while-open delivery, fake plugin
 └── screens/                           # real widget trees, tester.tap()
     ├── app_shell_test.dart            # main(), auth gate, login, RootShell tabs, Account
     ├── notes_home_screen_test.dart
@@ -106,8 +112,12 @@ test/
     ├── bulk_import_staging_screen_test.dart
     ├── note_editor_screen_test.dart
     ├── question_screens_test.dart     # NoteQuestionsScreen + QuestionEditorScreen
-    ├── quiz_screen_test.dart
-    └── settings_screen_test.dart
+    ├── quiz_screen_test.dart          # grading, suggested/overridden ratings, retention setting
+    ├── today_screen_test.dart
+    ├── tracker_screens_test.dart      # list/filters, editor, detail, attempt sheet, timer, link
+    └── settings_screen_test.dart      # retention slider, reminder permission and time
+theme/
+└── widgets_test.dart                  # PixelButton press, pills, RetentionMeter
 ```
 
 ## Why widget tests, not device-input simulation
@@ -187,6 +197,12 @@ supposed to.
     means the user cancelled)
   - `share_plus`: a `FakeSharePlatform` that records the shared files
   - `path_provider`: a `FakePathProvider` pointing at a fresh temp directory
+  - `flutter_local_notifications` (per test, not in `setUpTestEnv`): fakes
+    in `fake_notifications.dart`, installed with `useFakeNotifications()`.
+    The plugin picks its platform side by `defaultTargetPlatform`, so plain
+    tests pass a platform and widget tests use a `TargetPlatformVariant`
+    (widget tests fail if the override is still set when they finish).
+  - `url_launcher`: a `FakeUrlLauncher` in `tracker_screens_test.dart`
 
   No test ever reaches a real platform channel.
 - **Screens that reach `RootShell` run as Linux**
@@ -223,6 +239,15 @@ supposed to.
 - **Native dialogs.** The file picker and share sheet are faked even in the
   integration test, so opening and dismissing the real OS dialogs is still
   only checked by hand.
-- **The integration test hasn't been run yet.** It was written on a machine
-  without the Linux desktop toolchain. Run it once the packages above are
-  installed, and remove this line when it passes.
+- **The integration test doesn't pass on the current dev machine.** Two
+  things, neither specific to the app:
+  - The Linux build fails to link (`cannot find -lstdc++`) because clang
+    picks GCC 14, whose `libstdc++` dev package isn't installed. Either
+    `sudo apt install libstdc++-14-dev`, or build against GCC 13:
+    `CXXFLAGS=--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/13`
+    (same for `CFLAGS` and `LDFLAGS`), after deleting `build/linux`.
+  - Once built, the second `enterText` into the login password field
+    doesn't land, so the test stops at sign-in. This also happens with the
+    test as it was before FSRS and the problem tracker (checked on commit
+    28ed50d), so it's a problem with this desktop's text input, not a
+    regression. The same sign-in sequence passes as a widget test.

@@ -160,7 +160,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   TextField(
                     controller: _titleController,
                     decoration: const InputDecoration(labelText: 'Title'),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
                   Expanded(

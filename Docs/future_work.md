@@ -2,28 +2,27 @@
 
 Known, intentional deferrals and gaps, not things discovered late and hidden.
 The planning document this project grew from
-(`Quiz-app-Ai/Docs/flutter_rewrite_plan.md`, in the sibling Python repo) has
+(`Docs/flutter_rewrite_plan.md`, moved here from the Python repo) has
 the full history of decisions; this file is the current, standalone summary.
 
 ## Blocked on things only a human can provide
 
 Not attempted, not faked with a stub that pretends to work:
 
-- **Local notifications** (remind me when quizzes are due). Needs a real
-  device to verify permission prompts and delivery actually work; this
-  project's headless emulator testing already proved unreliable for
-  verifying tap interactions (see `testing.md`), and is even less
-  trustworthy for verifying platform permission/notification behavior.
+- **Checking reminders on real devices.** Study reminders are built
+  (`services/reminder_service.dart`, Settings > Reminders) and tested
+  against a fake notification plugin, but delivery hasn't been seen on a
+  real phone or desktop yet. Worth checking: the Android 13+ permission
+  prompt, an inexact scheduled notification arriving with the app closed
+  and after a reboot, and the Linux/Windows while-open reminder. Windows
+  only shows reminders while the app is open because it can't cancel
+  scheduled toasts without MSIX packaging; packaging it as MSIX would allow
+  real scheduling there.
 - **Cloud storage integrations** (Dropbox, Google Drive, OneNote). Each
   needs a real developer-console app registration (client ID/secret) that
   only the project owner can create. Building OAuth flow scaffolding against
   nonexistent credentials would be unverifiable busywork, so nothing has
   been built here yet, not even a placeholder screen.
-- **Exact savepoint.cc brand assets** (`gui_theming.md`). A text-only page
-  fetch can't extract real hex codes, fonts, or spacing. The current theme
-  is a direct port of the Python desktop app's own (also not fully verified)
-  palette claims. Needs either the real CSS/brand guide or screenshots to
-  check against.
 - **Mobile app store submission** (Apple App Store, Google Play). Needs an
   Apple Developer account (plus a Mac, for iOS) and a Google Play Console
   account; inherently a human/billing decision, not something to attempt
@@ -66,9 +65,17 @@ Not attempted, not faked with a stub that pretends to work:
   notes are due for new questions when the app opens, generate without a
   manual button press. Right now, generation is always a manual "Generate"
   tap in the note editor.
-- **Stats / accuracy view.** `question_history` (the append-only review
-  audit log) exists and is written to on every answer, but nothing reads it
-  back yet to show per-question or per-folder accuracy.
+- **Deeper stats.** The Today tab shows what's due, reviews done today,
+  average recall and a 7-day forecast. There's no per-folder or per-tag
+  accuracy, streak or history chart yet, though `question_history` and
+  `problem_attempts` record everything needed.
+- **Personalised FSRS weights.** Scheduling uses FSRS's default 21
+  parameters. FSRS can optimise them from a user's own review log (a few
+  hundred reviews in); that would need an optimiser, which the `fsrs` Dart
+  package doesn't include.
+- **Linking problems to notes or folders.** Problems are a flat list,
+  filterable by status, difficulty, tag and text, and not attached to a
+  note or subject folder.
 - **Soft-deleting a question.** The `active` column and the DB-level
   capability exist (see `database_schema.md`), but no screen exposes a way
   to deactivate a single question without deleting its entire parent note.
@@ -82,8 +89,6 @@ Not attempted, not faked with a stub that pretends to work:
 
 ## Known rough edges
 
-- Custom fonts aren't bundled (see `gui_theming.md`); the app uses
-  Flutter's default Material font stack for now.
-- The theme hasn't been checked against the real savepoint.cc site (see
-  above); treat current colors as a reasonable placeholder, not a confirmed
-  match.
+- No dark mode (savepoint.co.nz has none either).
+- The theme and fonts come from savepoint.co.nz's live CSS, but the app
+  hasn't been compared side by side with the site on a real device.

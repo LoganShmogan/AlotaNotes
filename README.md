@@ -1,12 +1,12 @@
 # Quiz App AI (Flutter)
 
-A mobile-first notes + spaced-repetition quiz app. Keep notes organized into
-subject folders, generate quiz questions from them using your own connected AI
-account, and get reviewed on a schedule that stretches out the better you know
-something.
+A mobile-first notes app built around spaced repetition. Keep notes in subject
+folders, turn them into quiz questions with your own AI account, track practice
+problems LeetCode-style, and let the FSRS forgetting curve bring each one back
+right before you'd forget it, with a reminder when something's due.
 
 This is a from-scratch Flutter rewrite of an earlier Python/Tkinter desktop app
-(`Quiz-app-Ai`, a sibling project): it reuses that project's *ideas* (and,
+([`Quiz-app-Ai`](https://github.com/LoganShmogan/Quiz-app-Ai)): it reuses that project's *ideas* (and,
 where useful, its algorithms ported to Dart), not its code. See
 `Docs/architecture.md` for how the two relate.
 
@@ -20,9 +20,19 @@ where useful, its algorithms ported to Dart), not its code. See
 - **Import your own files.** `.txt`, `.md`, `.pdf`, `.docx`, `.pptx`, single
   file or bulk, with a preview/reorder step before anything is actually
   imported.
-- **Spaced repetition**, a fixed interval sequence (`1, 2, 3, 5, 7, 14, 30`
-  days), looping back to the start once it completes; any wrong answer resets
-  it. See `Docs/scheduling_algorithm.md`.
+- **FSRS scheduling** (the algorithm Anki uses) for every quiz question and
+  problem. Answers are auto-graded and then rated Again/Hard/Good/Easy, each
+  button showing when that rating brings the item back. Target recall is
+  adjustable in Settings. See `Docs/scheduling_algorithm.md`.
+- **Problem tracker.** Log practice problems with difficulty, tags, link and
+  your solution; time and log each attempt; re-solve them on their own FSRS
+  schedule.
+- **Today dashboard and reminders.** What's due, reviews done today, average
+  recall and a 7-day forecast, plus an optional daily study notification
+  (scheduled by the OS on Android/iOS/macOS, shown while open on
+  Linux/Windows).
+- **SavePoint look.** Colours, Chakra Petch and Figtree fonts, borders and
+  pixel shadows from savepoint.co.nz. See `Docs/gui_theming.md`.
 
 ## Quick start
 
@@ -45,7 +55,7 @@ flutter analyze
 flutter test
 ```
 
-175 tests covering pure logic (scheduling, grading, text extraction), storage
+277 tests covering pure logic (scheduling, grading, text extraction), storage
 repositories (real in-memory SQLite), AI providers (HTTP-mocked, no real
 network/API key needed), and widget tests for every screen (real
 `tester.tap()` interaction, not device input simulation). Line coverage of
@@ -56,7 +66,7 @@ that isn't, and this project hit that difference the hard way once already.
 
 There's also one end-to-end test that runs the real app on Linux desktop
 (real SQLite file, real settings and keychain, real HTTP to a local fake AI
-server), from sign-in through quiz, import and export:
+server), from sign-in through quiz, problem tracking, import and export:
 
 ```bash
 flutter test integration_test -d linux
@@ -71,10 +81,10 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
 - `architecture.md`, module map, layering, how this relates to the original
   Python desktop app
 - `database_schema.md`, the SQLite schema
-- `scheduling_algorithm.md`, the spaced-repetition interval algorithm
+- `scheduling_algorithm.md`, FSRS scheduling, ratings and the v1 migration
 - `ai_providers.md`, the AI provider abstraction (OpenAI/Anthropic), how to
   add a third
-- `gui_theming.md`, the visual design system
+- `gui_theming.md`, the SavePoint visual design system
 - `testing.md`, how to run tests and check coverage, the test fakes and
   patterns, what's not covered, and the ADB-tap
   cautionary tale behind why widget tests are the trustworthy path here

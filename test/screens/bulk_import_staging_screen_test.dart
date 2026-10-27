@@ -133,7 +133,7 @@ void main() {
 
       expect(result.popped, isFalse);
       final error = tester.widget<Text>(find.textContaining("Unsupported file type '.exe'"));
-      expect(error.style?.color, Colors.redAccent);
+      expect(error.style?.color, Theme.of(tester.element(find.byType(BulkImportStagingScreen))).colorScheme.error);
       expect((await NotesRepo(db).listByFolder(folderId)).single.title, 'good.txt');
     });
   });

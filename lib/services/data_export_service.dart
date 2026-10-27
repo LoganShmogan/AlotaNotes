@@ -1,5 +1,5 @@
-/// Full data export -- every folder, note, question, choice, and review
-/// history row, as one portable JSON file. This is a top-level requirement
+/// Full data export -- every folder, note, question, choice, problem,
+/// problem attempt and review history row, as one portable JSON file. This is a top-level requirement
 /// per Docs/flutter_rewrite_plan.md ("get all my data out should always
 /// work with no friction"), not an afterthought.
 ///
@@ -15,15 +15,25 @@ import 'dart:convert';
 import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../storage/db.dart';
+
 class DataExportService {
   final Database db;
   const DataExportService(this.db);
 
   Future<Map<String, dynamic>> buildExport() async {
-    final tables = ['folders', 'notes', 'questions', 'question_choices', 'question_history'];
+    final tables = [
+      'folders',
+      'notes',
+      'questions',
+      'question_choices',
+      'question_history',
+      'problems',
+      'problem_attempts',
+    ];
     final data = <String, dynamic>{
       'exported_at': DateTime.now().toUtc().toIso8601String(),
-      'schema_version': 1,
+      'schema_version': schemaVersion,
     };
     for (final table in tables) {
       data[table] = await db.query(table);

@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 
 import 'auth/auth_service.dart';
+import 'services/reminder_service.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/root_shell.dart';
 import 'theme/theme.dart';
 
 class QuizApp extends StatelessWidget {
   final AuthService authService;
-  const QuizApp({super.key, required this.authService});
+  final ReminderService? reminders;
+  const QuizApp({super.key, required this.authService, this.reminders});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Quiz App',
+      title: 'Quiz App AI',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      home: _AuthGate(authService: authService),
+      home: _AuthGate(authService: authService, reminders: reminders),
     );
   }
 }
@@ -24,7 +26,8 @@ class QuizApp extends StatelessWidget {
 /// (currently hardcoded, see auth/auth_service.dart) session already exists.
 class _AuthGate extends StatelessWidget {
   final AuthService authService;
-  const _AuthGate({required this.authService});
+  final ReminderService? reminders;
+  const _AuthGate({required this.authService, this.reminders});
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +38,9 @@ class _AuthGate extends StatelessWidget {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
         if (snapshot.data != null) {
-          return RootShell(authService: authService);
+          return RootShell(authService: authService, reminders: reminders);
         }
-        return LoginScreen(authService: authService);
+        return LoginScreen(authService: authService, reminders: reminders);
       },
     );
   }

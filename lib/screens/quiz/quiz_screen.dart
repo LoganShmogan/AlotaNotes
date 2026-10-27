@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:sqflite/sqflite.dart';
 
 import '../../core/grading.dart';
 import '../../core/models.dart';
 import '../../core/scheduling.dart';
+import '../../settings/app_settings.dart';
 import '../../storage/db.dart';
 import '../../storage/questions_repo.dart';
 import '../../storage/reviews_repo.dart';
+import '../../theme/theme.dart';
+import '../../theme/widgets.dart';
+import '../review/rating_buttons.dart';
 
-/// "Today's Quizzes" -- everything due right now. Mirrors the Python
+/// A review session over every question due right now. Mirrors the Python
 /// desktop app's QuizSessionScreen/QuizController: grade the answer locally
 /// (core/grading.dart for short-answer, direct equality for multiple
-/// choice), advance the schedule (core/scheduling.dart), persist, move on,
-/// and record the immutable history row (ReviewsRepo) stats will read from.
+/// choice), then -- new with FSRS -- let the user confirm or adjust the
+/// rating auto-grading suggests (wrong -> Again, right -> Good). Only the
+/// rating tap saves: it advances the card (core/scheduling.dart), records
+/// the immutable history row (ReviewsRepo) and moves on.
 class QuizScreen extends StatefulWidget {
   final Database db;
   const QuizScreen({super.key, required this.db});
@@ -24,13 +31,17 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   late final QuestionsRepo _questionsRepo = QuestionsRepo(widget.db);
   late final ReviewsRepo _reviewsRepo = ReviewsRepo(widget.db);
+  fsrs.Scheduler _scheduler = buildScheduler();
   List<Question> _queue = [];
   Question? _current;
   bool _loading = true;
-  bool _submitted = false;
-  bool? _wasCorrect;
+  int _reviewed = 0;
+  bool _saving = false;
   final _answerController = TextEditingController();
   String? _selectedChoice;
+
+  // Set once the current question has been answered.
+  ({String givenAnswer, bool isCorrect, String gradingMethod, DateTime answeredAt})? _graded;
 
   @override
   void initState() {
@@ -39,9 +50,11 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _refresh() async {
+    final settings = await const AppSettingsStore().load();
     final due = await _questionsRepo.listDue(utcNow());
     if (!mounted) return;
     setState(() {
+      _scheduler = buildScheduler(desiredRetention: settings.desiredRetention);
       _queue = due;
       _loading = false;
     });
@@ -51,8 +64,7 @@ class _QuizScreenState extends State<QuizScreen> {
   void _advance() {
     _answerController.clear();
     _selectedChoice = null;
-    _submitted = false;
-    _wasCorrect = null;
+    _graded = null;
     setState(() => _current = _queue.isEmpty ? null : _queue.removeAt(0));
   }
 
@@ -74,37 +86,36 @@ class _QuizScreenState extends State<QuizScreen> {
     return (isCorrect, method);
   }
 
-  Future<void> _submit() async {
-    final question = _current;
-    if (question == null) return;
+  void _submit() {
+    final question = _current!;
     final givenAnswer = question.questionType == questionTypeMultipleChoice
         ? (_selectedChoice ?? '')
         : _answerController.text;
     final (isCorrect, gradingMethod) = _grade(question, givenAnswer);
-    final answeredAt = utcNow();
-    final outcome = applyReview(question.intervalIndex, isCorrect, answeredAt);
+    setState(() {
+      _graded = (givenAnswer: givenAnswer, isCorrect: isCorrect, gradingMethod: gradingMethod, answeredAt: utcNow());
+    });
+  }
 
-    await _questionsRepo.updateScheduling(
-      question.id,
-      intervalIndex: outcome.newIndex,
-      lastAskedAt: answeredAt,
-      nextDueAt: outcome.nextDueAt,
-    );
+  Future<void> _rate(ReviewRating rating) async {
+    final question = _current!;
+    final graded = _graded!;
+    setState(() => _saving = true);
+    final after = reviewCard(question.card, rating, graded.answeredAt, scheduler: _scheduler);
+    await _questionsRepo.updateScheduling(question.id, after);
     await _reviewsRepo.record(
       question.id,
-      givenAnswer,
-      isCorrect,
-      question.intervalIndex,
-      outcome.newIndex,
-      gradingMethod,
-      askedAt: answeredAt,
+      graded.givenAnswer,
+      graded.isCorrect,
+      rating,
+      graded.gradingMethod,
+      after,
+      askedAt: graded.answeredAt,
     );
-
     if (!mounted) return;
-    setState(() {
-      _submitted = true;
-      _wasCorrect = isCorrect;
-    });
+    _reviewed++;
+    _saving = false;
+    _advance();
   }
 
   @override
@@ -116,16 +127,21 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Today's Quizzes")),
+      appBar: AppBar(title: const Text('Quiz')),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _current == null
                 ? ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text('Nothing due right now. Nice work!')),
+                    children: [
+                      const SizedBox(height: 80),
+                      EmptyState(
+                        icon: Icons.celebration_outlined,
+                        message: _reviewed == 0
+                            ? 'Nothing due right now. Nice work!'
+                            : 'Session done: $_reviewed reviewed. Nothing else is due right now.',
+                      ),
                     ],
                   )
                 : _buildQuestion(_current!),
@@ -134,55 +150,62 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildQuestion(Question question) {
+    final graded = _graded;
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('${_queue.length} more due after this one', style: const TextStyle(color: Colors.white70)),
+        Text('${_queue.length} more due after this one', style: theme.textTheme.bodySmall),
         const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(question.prompt, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                if (question.questionType == questionTypeMultipleChoice)
-                  // groupValue/onChanged are deprecated in favor of RadioGroup as of
-                  // Flutter 3.32, but still functional; not worth migrating for one
-                  // radio list yet.
-                  ...question.choices.map((choice) => RadioListTile<String>(
-                        title: Text(choice.choiceText),
-                        // ignore: deprecated_member_use
-                        groupValue: _selectedChoice,
-                        value: choice.choiceText,
-                        // ignore: deprecated_member_use
-                        onChanged: _submitted ? null : (value) => setState(() => _selectedChoice = value),
-                      ))
-                else
-                  TextField(
-                    controller: _answerController,
-                    enabled: !_submitted,
-                    decoration: const InputDecoration(labelText: 'Your answer'),
-                  ),
-                const SizedBox(height: 16),
-                if (!_submitted)
-                  ElevatedButton(onPressed: _submit, child: const Text('Submit'))
-                else ...[
-                  Text(
-                    _wasCorrect == true ? 'Correct!' : 'Incorrect. Expected: ${question.expectedAnswer}',
-                    style: TextStyle(
-                      color: _wasCorrect == true ? Colors.greenAccent : Colors.amberAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(onPressed: _advance, child: const Text('Next')),
-                ],
-              ],
-            ),
+        PixelCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(question.prompt, style: theme.textTheme.titleLarge),
+              const SizedBox(height: 16),
+              if (question.questionType == questionTypeMultipleChoice)
+                // groupValue/onChanged are deprecated in favor of RadioGroup as of
+                // Flutter 3.32, but still functional; not worth migrating for one
+                // radio list yet.
+                ...question.choices.map((choice) => RadioListTile<String>(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(choice.choiceText),
+                      // ignore: deprecated_member_use
+                      groupValue: _selectedChoice,
+                      value: choice.choiceText,
+                      // ignore: deprecated_member_use
+                      onChanged: graded != null ? null : (value) => setState(() => _selectedChoice = value),
+                    ))
+              else
+                TextField(
+                  controller: _answerController,
+                  enabled: graded == null,
+                  decoration: const InputDecoration(labelText: 'Your answer'),
+                ),
+              const SizedBox(height: 16),
+              if (graded == null) PixelButton(label: 'Submit', onPressed: _submit),
+            ],
           ),
         ),
+        if (graded != null) ...[
+          const SizedBox(height: 16),
+          PixelCard(
+            color: graded.isCorrect ? colorGreen : colorPaperTint,
+            shadowColor: colorInk,
+            child: Text(
+              graded.isCorrect ? 'Correct!' : 'Incorrect. Expected: ${question.expectedAnswer}',
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+          const SectionLabel('How well did you know it?'),
+          RatingButtons(
+            previews: previewNextDue(question.card, graded.answeredAt, scheduler: _scheduler),
+            now: graded.answeredAt,
+            highlighted: suggestedRating(graded.isCorrect),
+            // Disabled while saving, so a double tap can't review twice.
+            onSelected: _saving ? null : _rate,
+          ),
+        ],
       ],
     );
   }

@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../core/models.dart';
 import '../../storage/folders_repo.dart';
+import '../../theme/widgets.dart';
 import 'dialogs.dart';
 import 'folder_detail_screen.dart';
 
@@ -57,16 +58,19 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _folders.isEmpty
-              ? const Center(child: Text('No subjects yet. Tap + to create one.'))
+              ? const EmptyState(icon: Icons.folder_outlined, message: 'No subjects yet. Tap + to create one.')
               : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
                   itemCount: _folders.length,
                   itemBuilder: (context, index) {
                     final folder = _folders[index];
-                    return ListTile(
-                      leading: const Icon(Icons.folder),
-                      title: Text(folder.name),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _openFolder(folder),
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.folder),
+                        title: Text(folder.name),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openFolder(folder),
+                      ),
                     );
                   },
                 ),

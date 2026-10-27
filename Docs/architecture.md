@@ -7,8 +7,8 @@ schedule.
 
 ## Relationship to the Python desktop app
 
-This project began as a mobile rewrite of `Quiz-app-Ai`, an existing
-Tkinter/Python desktop app (a sibling directory, not a dependency of this
+This project began as a mobile rewrite of [`Quiz-app-Ai`](https://github.com/LoganShmogan/Quiz-app-Ai), an existing
+Tkinter/Python desktop app (a separate repo, not a dependency of this
 one). Nothing here imports or shares code with it (Dart and Python can't
 share a codebase), but a lot of the *design* carries over deliberately:
 
@@ -37,17 +37,20 @@ lib/
 
 **`core/`**: pure business logic, zero I/O.
 - `models.dart`: plain Dart classes shared across every layer (`Folder`,
-  `Note`, `Question`, `Choice`, `ReviewRecord`). Every field is `final`;
+  `Note`, `Question`, `Choice`, `ReviewRecord`, `SrsCard`, `ReviewRating`,
+  `Problem`, `ProblemAttempt`). Every field is `final`;
   nothing outside `storage/` should mutate one and expect it to reach the
   database (see the file's own doc comment for why).
-- `scheduling.dart`: the spaced-repetition interval algorithm, a pure
-  function with no side effects (see `scheduling_algorithm.md`).
+- `scheduling.dart`: FSRS scheduling, a pure wrapper around the `fsrs`
+  package (see `scheduling_algorithm.md`).
+- `reminders.dart`: when to send study reminders and what they say.
 - `grading.dart`: local short-answer grading (normalized text/keyword
   overlap, no AI call).
 - `text_extraction.dart`: `.txt`/`.md`/`.pdf`/`.docx`/`.pptx` to plain text.
 
 **`storage/`**: a thin `sqflite` data-access layer, one repo class per table
-group (`FoldersRepo`, `NotesRepo`, `QuestionsRepo`, `ReviewsRepo`). No ORM:
+group (`FoldersRepo`, `NotesRepo`, `QuestionsRepo`, `ReviewsRepo`,
+`ProblemsRepo`). No ORM:
 `db.dart` holds the schema and a connection factory (`openAppDatabase()`,
 with `appDatabaseFactory()` picking the SQLite backend per platform:
 IndexedDB-backed on web, FFI on Windows/Linux, the `sqflite` plugin on
@@ -73,14 +76,17 @@ screen, since it's a secret and `shared_preferences` isn't encrypted.
   on mobile/desktop, a download on web). `exportFile()` returns the file
   name alongside the file, because `XFile.fromData` only keeps the name on
   web; elsewhere it's passed to the share sheet via `fileNameOverrides`.
+- `reminder_service.dart`: plans study reminders from what's due and hands
+  them to `flutter_local_notifications`, scheduled ahead on
+  Android/iOS/macOS and shown while open on Linux/Windows.
 
 **`auth/`**: `AuthService` abstraction. `HardcodedAuthService` is the only
 implementation right now (a single local admin/1234 session); see
 `future_work.md` for why and what replaces it later.
 
-**`screens/`**: the actual widgets, organized by tab (`notes/`, `quiz/`,
-`account/`, `settings/`, `login/`), plus `root_shell.dart` (the four-tab
-shell) and `app.dart` (the composition root: the one place that decides
+**`screens/`**: the actual widgets, organized by tab (`today/`, `notes/`,
+`tracker/`, `quiz/`, `account/`, `settings/`, `login/`, and `review/` for
+the shared rating buttons), plus `root_shell.dart` (the five-tab shell) and `app.dart` (the composition root: the one place that decides
 which `AuthService`, which repos, which screens are wired together).
 
 ## End-to-end data flow
@@ -97,14 +103,19 @@ which `AuthService`, which repos, which screens are wired together).
    reads the note, calls the configured `AIProvider` (built via
    `ai/provider_factory.dart` from whatever provider/model/API key is
    configured), and persists each `GeneratedQuestion` via
-   `QuestionsRepo.create()` at `intervalIndex = 0`, due one day out (not
-   immediately; see `scheduling_algorithm.md`).
-4. **Review**: `QuizScreen` pulls everything due via
-   `QuestionsRepo.listDue()`, grades the answer (`core/grading.dart` for
-   short-answer, direct `Choice.isCorrect` equality for multiple-choice),
-   applies `core/scheduling.applyReview()` to compute the next interval and
-   due date, persists it via `QuestionsRepo.updateScheduling()`, and appends
-   an immutable row to `question_history` via `ReviewsRepo.record()`.
+   `QuestionsRepo.create()` as a new FSRS card, due straight away.
+4. **Review**: the Today tab's "Start quiz" opens `QuizScreen`, which pulls
+   everything due via `QuestionsRepo.listDue()` and grades the answer
+   (`core/grading.dart` for short-answer, direct `Choice.isCorrect` equality
+   for multiple-choice). The user confirms or changes the suggested rating;
+   `core/scheduling.reviewCard()` computes the new card, persisted via
+   `QuestionsRepo.updateScheduling()`, and an immutable row goes to
+   `question_history` via `ReviewsRepo.record()`.
+4b. **Practice a problem**: on the Tracker tab, `ProblemDetailScreen` logs
+   an attempt (solved or not, time taken, self-rated) through
+   `ProblemsRepo.recordAttempt()`, which moves the problem's own FSRS card.
+4c. **Reminders**: after any review, attempt or settings change,
+   `RootShell` re-plans reminders via `ReminderService.trySync()`.
 5. **Edit a question**: `QuestionEditorScreen` lets you hand-edit an
    AI-generated question's prompt/answer/choices via
    `QuestionsRepo.updateContent()`, which marks `isManuallyEdited` so a
@@ -118,5 +129,8 @@ which `AuthService`, which repos, which screens are wired together).
 
 `lib/app.dart::QuizApp` wires an `AuthService` and shows either the login
 screen or `RootShell`. `RootShell` (`lib/screens/root_shell.dart`) opens the
-SQLite connection, constructs every repo, and constructs the four tab
-screens, driving navigation via an `IndexedStack` + `BottomNavigationBar`.
+SQLite connection and constructs the five tab screens (Today, Notes,
+Tracker, Account, Settings), driving navigation via an `IndexedStack` and a
+`NavigationBar`. It owns the `ReminderService` (passed in from `main.dart`)
+and a change counter: when one tab reports a study change, the others
+refresh and reminders are re-planned.

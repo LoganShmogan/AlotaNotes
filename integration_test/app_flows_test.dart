@@ -155,7 +155,7 @@ Future<void> enterText(WidgetTester tester, Finder field, String text) async {
 
 Finder field(String label) => find.widgetWithText(TextField, label);
 
-Finder navTab(String label) => find.descendant(of: find.byType(BottomNavigationBar), matching: find.text(label));
+Finder navTab(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
 
 Future<void> goBack(WidgetTester tester) async {
   await tap(tester, find.byTooltip('Back'));
@@ -209,7 +209,8 @@ void main() {
     if (documentsDir.existsSync()) documentsDir.deleteSync(recursive: true);
   });
 
-  testWidgets('a full session: sign in, write notes, generate, quiz, import, export, sign out', (tester) async {
+  testWidgets('a full session: sign in, write notes, generate, quiz, track a problem, import, export, sign out',
+      (tester) async {
     app.main();
 
     // --- Sign in --------------------------------------------------------
@@ -221,7 +222,7 @@ void main() {
 
     await enterText(tester, field('Password'), '1234');
     await tap(tester, find.text('Sign in'));
-    await waitFor(tester, find.text('No subjects yet. Tap + to create one.'));
+    await waitFor(tester, find.text('All caught up')); // the Today tab
 
     // The real openAppDatabase() created its file under the documents dir.
     final dbFile = File(p.join(documentsDir.path, 'quizapp.db'));
@@ -301,16 +302,11 @@ void main() {
     await dismissSnackBars(tester);
     await goBack(tester);
 
-    // --- Take the quiz ----------------------------------------------------
-    // New questions are first due a day after creation. Stand in for that
-    // day passing by moving their due dates into the past, through the same
-    // file the app has open.
+    // --- Take the quiz from the Today tab ----------------------------------
+    // New questions are due straight away, so Today offers both.
     final db = await databaseFactoryFfi.openDatabase(dbFile.path);
-    await db.update('questions', {'next_due_at': dtToIso(utcNow().subtract(const Duration(hours: 1)))});
-
-    await tap(tester, navTab('Quiz'));
-    await waitFor(tester, find.text('Nothing due right now. Nice work!'));
-    await tester.fling(find.text('Nothing due right now. Nice work!'), const Offset(0, 400), 1000);
+    await tap(tester, navTab('Today'));
+    await tap(tester, find.text('Start quiz (2)'));
     await waitFor(tester, find.text('1 more due after this one'));
 
     // Both questions share a due time, so either can come first.
@@ -319,27 +315,49 @@ void main() {
         await tap(tester, find.text('Mars')); // deliberately wrong
         await tap(tester, find.text('Submit'));
         await waitFor(tester, find.text('Incorrect. Expected: Jupiter'));
+        await tap(tester, find.byKey(const ValueKey('rating-again')));
       } else {
         await enterText(tester, field('Your answer'), 'paris');
         await tap(tester, find.text('Submit'));
         await waitFor(tester, find.text('Correct!'));
+        await tap(tester, find.byKey(const ValueKey('rating-easy'))); // overrides the suggested Good
       }
-      await tap(tester, find.text('Next'));
     }
-    await waitFor(tester, find.text('Nothing due right now. Nice work!'));
+    await waitFor(tester, find.text('Session done: 2 reviewed. Nothing else is due right now.'));
 
     final history = await db.query('question_history', orderBy: 'id');
     expect(history, hasLength(2));
-    expect(history.map((r) => r['is_correct']), unorderedEquals([1, 0]));
+    expect(history.map((r) => (r['is_correct'], r['rating'])), unorderedEquals([(1, 4), (0, 1)]));
     final rescheduled = await db.query('questions', where: 'next_due_at <= ?', whereArgs: [dtToIso(utcNow())]);
     expect(rescheduled, isEmpty, reason: 'answered questions should no longer be due');
+    await goBack(tester);
+    await waitFor(tester, find.text('All caught up'));
+
+    // --- Track a problem and log an attempt --------------------------------
+    await tap(tester, navTab('Tracker'));
+    await tap(tester, find.text('Add a problem'));
+    await enterText(tester, field('Problem name'), 'Two Sum');
+    await tap(tester, find.widgetWithText(ChoiceChip, 'Easy'));
+    await enterText(tester, field('Tags, comma separated'), 'arrays, hash map');
+    await tap(tester, find.byIcon(Icons.save));
+    await tap(tester, find.text('Log attempt'));
+    await enterText(tester, field('Time taken (minutes, optional)'), '15');
+    await tap(tester, find.text('Save attempt'));
+    await waitFor(tester, find.text('Logged. Next re-solve in 10m.'));
+    await dismissSnackBars(tester);
+    await goBack(tester);
+    await waitFor(tester, find.text('1 problems · 1 solved · 0 due'));
+    final attempts = await db.query('problem_attempts');
+    expect((attempts.single['solved'], attempts.single['rating'], attempts.single['duration_minutes']), (1, 3, 15));
 
     // --- Settings: default format and export ------------------------------
     await tap(tester, navTab('Settings'));
+    await tester.scrollUntilVisible(find.text('Multiple choice'), 200);
     await tap(tester, find.text('Multiple choice'));
     await tester.pumpAndSettle();
     expect(await SharedPreferencesAsync().getString(_settingsKey), contains('"default_question_format":"multiple_choice"'));
 
+    await tester.scrollUntilVisible(find.text('Export all data'), 200);
     await tap(tester, find.text('Export all data'));
     await pumpUntil(tester, () => sharePlatform.sharedFiles.isNotEmpty, reason: 'export shared');
     final export = jsonDecode(await sharePlatform.sharedFiles.single.readAsString()) as Map<String, dynamic>;
@@ -348,6 +366,8 @@ void main() {
     expect(export['questions'], hasLength(2));
     expect(export['question_choices'], hasLength(3));
     expect(export['question_history'], hasLength(2));
+    expect(export['problems'], hasLength(1));
+    expect(export['problem_attempts'], hasLength(1));
 
     // --- Sign out, sign back in: everything is still there ----------------
     await tap(tester, navTab('Account'));
@@ -356,6 +376,7 @@ void main() {
     await enterText(tester, field('Username'), 'admin');
     await enterText(tester, field('Password'), '1234');
     await tap(tester, find.text('Sign in'));
+    await tap(tester, navTab('Notes'));
     await waitFor(tester, find.text('Geography'));
 
     await tap(tester, navTab('Account'));

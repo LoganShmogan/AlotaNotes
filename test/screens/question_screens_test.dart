@@ -135,7 +135,7 @@ void main() {
         final q = await multipleChoice();
         await show(tester, q.id);
 
-        expect(find.text('Choices (select the correct one)'), findsOneWidget);
+        expect(find.text('CHOICES (SELECT THE CORRECT ONE)'), findsOneWidget);
         expect(find.byType(Radio<int>), findsNWidgets(3));
 
         await tester.enterText(find.widgetWithText(TextField, 'Ribosome'), ' Chromosome ');

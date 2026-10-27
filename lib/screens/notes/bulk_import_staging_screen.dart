@@ -130,7 +130,7 @@ class _BulkImportStagingScreenState extends State<BulkImportStagingScreen> {
                     ),
                     subtitle: Text(
                       item.error ?? item.file.name,
-                      style: item.error != null ? const TextStyle(color: Colors.redAccent) : null,
+                      style: item.error != null ? TextStyle(color: Theme.of(context).colorScheme.error) : null,
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.close),

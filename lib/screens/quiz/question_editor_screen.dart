@@ -4,6 +4,8 @@ import 'package:sqflite/sqflite.dart';
 import '../../core/models.dart';
 import '../../storage/notes_repo.dart';
 import '../../storage/questions_repo.dart';
+import '../../theme/theme.dart';
+import '../../theme/widgets.dart';
 import '../notes/note_editor_screen.dart';
 
 /// Manual editing of an AI-generated (or previously edited) question, plus
@@ -128,7 +130,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                 if (_question?.isManuallyEdited == true)
                   const Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: Text('Manually edited', style: TextStyle(color: Colors.amberAccent)),
+                    child: Align(alignment: Alignment.centerLeft, child: Pill('Manually edited', color: colorYellow)),
                   ),
                 const SizedBox(height: 16),
                 TextField(
@@ -143,7 +145,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                     decoration: const InputDecoration(labelText: 'Expected answer'),
                   )
                 else ...[
-                  const Text('Choices (select the correct one)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SectionLabel('Choices (select the correct one)'),
                   for (var i = 0; i < _choiceControllers.length; i++)
                     Row(
                       children: [

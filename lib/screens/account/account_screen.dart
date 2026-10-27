@@ -3,7 +3,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../ai/provider_factory.dart';
 import '../../auth/auth_service.dart';
+import '../../services/reminder_service.dart';
 import '../../settings/app_settings.dart';
+import '../../theme/widgets.dart';
 import '../login/login_screen.dart';
 
 const _apiKeyStorageKey = 'ai_api_key';
@@ -15,7 +17,8 @@ const _apiKeyStorageKey = 'ai_api_key';
 /// connection live.
 class AccountScreen extends StatefulWidget {
   final AuthService authService;
-  const AccountScreen({super.key, required this.authService});
+  final ReminderService? reminders;
+  const AccountScreen({super.key, required this.authService, this.reminders});
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
@@ -55,10 +58,15 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _save() async {
     await _secureStorage.write(key: _apiKeyStorageKey, value: _apiKeyController.text.trim());
-    await _settingsStore.save(AppSettings(
+    // Start from what's stored, so saving here never resets Settings-tab
+    // choices (question format, retention, reminders).
+    final baseUrl = _baseUrlController.text.trim();
+    final settings = await _settingsStore.load();
+    await _settingsStore.save(settings.copyWith(
       provider: _provider,
       model: _modelController.text.trim(),
-      baseUrl: _baseUrlController.text.trim().isEmpty ? null : _baseUrlController.text.trim(),
+      baseUrl: baseUrl.isEmpty ? null : baseUrl,
+      clearBaseUrl: baseUrl.isEmpty,
     ));
     if (!mounted) return;
     setState(() => _saved = true);
@@ -68,7 +76,7 @@ class _AccountScreenState extends State<AccountScreen> {
     await widget.authService.logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => LoginScreen(authService: widget.authService)),
+      MaterialPageRoute(builder: (_) => LoginScreen(authService: widget.authService, reminders: widget.reminders)),
       (route) => false,
     );
   }
@@ -96,8 +104,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   subtitle: const Text('Local device account'),
                 ),
                 const Divider(height: 32),
-                const Text('AI provider', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                const SectionLabel('AI provider'),
                 DropdownButtonFormField<String>(
                   initialValue: _provider,
                   items: [
@@ -129,9 +136,9 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 12),
                 ElevatedButton(onPressed: _save, child: Text(_saved ? 'Saved' : 'Save')),
                 const Divider(height: 32),
-                const Text(
+                Text(
                   'Cloud storage connections (Dropbox, Google Drive, OneNote) — coming later.',
-                  style: TextStyle(color: Colors.white70),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 32),
                 OutlinedButton(onPressed: _logout, child: const Text('Log out')),

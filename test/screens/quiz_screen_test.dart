@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizapp/core/models.dart';
+import 'package:quizapp/core/scheduling.dart';
 import 'package:quizapp/screens/quiz/quiz_screen.dart';
+import 'package:quizapp/settings/app_settings.dart';
 import 'package:quizapp/storage/folders_repo.dart';
 import 'package:quizapp/storage/notes_repo.dart';
 import 'package:quizapp/storage/questions_repo.dart';
@@ -16,7 +18,6 @@ void main() {
   late Database db;
   late QuestionsRepo questions;
   late int noteId;
-  // Created a week ago, so first due six days ago: due now.
   final weekAgo = DateTime.now().toUtc().subtract(const Duration(days: 7));
 
   Future<void> setUpDb() async {
@@ -26,6 +27,7 @@ void main() {
     noteId = (await NotesRepo(db).create(folder.id, 'Cells', '')).id;
   }
 
+  // New questions are due as soon as they're created.
   Future<Question> due(String prompt, String answer, {List<(String, bool)>? choices, DateTime? createdAt}) =>
       questions.create(
         noteId,
@@ -46,18 +48,30 @@ void main() {
     await pumpUntil(tester, () => find.textContaining(resultText).evaluate().isNotEmpty);
   }
 
+  Future<void> rate(WidgetTester tester, ReviewRating rating) async {
+    await tester.ensureVisible(find.byKey(ValueKey('rating-${rating.name}')));
+    await tester.tap(find.byKey(ValueKey('rating-${rating.name}')));
+    await pumpUntil(tester, () => find.byKey(ValueKey('rating-${rating.name}')).evaluate().isEmpty);
+  }
+
+  /// Background colour of a rating button: yellow = highlighted.
+  Color? ratingColor(WidgetTester tester, ReviewRating rating) => tester
+      .widget<OutlinedButton>(find.byKey(ValueKey('rating-${rating.name}')))
+      .style!
+      .backgroundColor!
+      .resolve({});
+
   testWidgets('nothing due shows the all-done message', (tester) async {
     await tester.runAsync(() async {
       await setUpDb();
-      // Created now, so not due until tomorrow.
-      await due('Not yet', 'x', createdAt: DateTime.now().toUtc());
+      await due('Not yet', 'x', createdAt: DateTime.now().toUtc().add(const Duration(days: 1)));
       await show(tester);
 
       expect(find.text('Nothing due right now. Nice work!'), findsOneWidget);
     });
   });
 
-  testWidgets('an exact short answer is correct, advances the schedule, and is logged', (tester) async {
+  testWidgets('a correct answer suggests Good; rating saves the card and the history row', (tester) async {
     await tester.runAsync(() async {
       await setUpDb();
       final q = await due('Powerhouse of the cell?', 'Mitochondria');
@@ -69,17 +83,40 @@ void main() {
       await tester.enterText(find.byType(TextField), 'mitochondria!');
       await submit(tester, 'Correct!');
       expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+      // Nothing is saved until a rating is picked.
+      expect(await ReviewsRepo(db).listForQuestion(q.id), isEmpty);
+
+      expect(ratingColor(tester, ReviewRating.good), isNot(ratingColor(tester, ReviewRating.hard)));
+      // Each button says when that rating would bring the question back.
+      expect(find.text('10m'), findsOneWidget); // Good on a new card
+      expect(find.text('16d'), findsOneWidget); // Easy skips learning
+
+      await rate(tester, ReviewRating.good);
+      final updated = await questions.get(q.id);
+      expect(updated.card.lastReview, isNotNull);
+      expect(updated.card.step, 1);
+      final review = (await ReviewsRepo(db).listForQuestion(q.id)).single;
+      expect((review.givenAnswer, review.isCorrect, review.rating, review.gradingMethod),
+          ('mitochondria!', true, ReviewRating.good, gradingMethodExactMatch));
+      expect(review.nextDueAfter, updated.nextDueAt);
+
+      expect(find.text('Session done: 1 reviewed. Nothing else is due right now.'), findsOneWidget);
+    });
+  });
+
+  testWidgets('the suggested rating can be overridden', (tester) async {
+    await tester.runAsync(() async {
+      await setUpDb();
+      final q = await due('Powerhouse of the cell?', 'Mitochondria');
+      await show(tester);
+
+      await tester.enterText(find.byType(TextField), 'Mitochondria');
+      await submit(tester, 'Correct!');
+      await rate(tester, ReviewRating.easy);
 
       final updated = await questions.get(q.id);
-      expect(updated.intervalIndex, 1);
-      expect(updated.lastAskedAt, isNotNull);
-      final review = (await ReviewsRepo(db).listForQuestion(q.id)).single;
-      expect((review.givenAnswer, review.isCorrect, review.gradingMethod), ('mitochondria!', true, gradingMethodExactMatch));
-      expect((review.intervalIndexBefore, review.intervalIndexAfter), (0, 1));
-
-      await tester.tap(find.text('Next'));
-      await tester.pump();
-      expect(find.text('Nothing due right now. Nice work!'), findsOneWidget);
+      expect(updated.card.state, srsStateReview);
+      expect((await ReviewsRepo(db).listForQuestion(q.id)).single.rating, ReviewRating.easy);
     });
   });
 
@@ -91,24 +128,59 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'it stores genetic material');
       await submit(tester, 'Correct!');
+      await rate(tester, ReviewRating.good);
 
       expect((await ReviewsRepo(db).listForQuestion(q.id)).single.gradingMethod, gradingMethodKeywordMatch);
     });
   });
 
-  testWidgets('a wrong answer shows the expected answer and resets the schedule', (tester) async {
+  testWidgets('a wrong answer shows the expected answer and suggests Again, a lapse', (tester) async {
     await tester.runAsync(() async {
       await setUpDb();
       final q = await due('Powerhouse of the cell?', 'Mitochondria');
-      await questions.updateScheduling(q.id, intervalIndex: 4, lastAskedAt: weekAgo, nextDueAt: weekAgo);
+      final reviewed = SrsCard(
+        state: srsStateReview,
+        stability: 20,
+        difficulty: 5,
+        due: weekAgo,
+        lastReview: weekAgo.subtract(const Duration(days: 20)),
+      );
+      await questions.updateScheduling(q.id, reviewed);
       await show(tester);
 
       await tester.enterText(find.byType(TextField), 'ribosome');
       await submit(tester, 'Incorrect. Expected: Mitochondria');
+      expect(ratingColor(tester, ReviewRating.again), isNot(ratingColor(tester, ReviewRating.good)));
+      await rate(tester, ReviewRating.again);
 
-      expect((await questions.get(q.id)).intervalIndex, 0);
+      expect((await questions.get(q.id)).card.state, srsStateRelearning);
       final review = (await ReviewsRepo(db).listForQuestion(q.id)).single;
-      expect((review.isCorrect, review.intervalIndexBefore, review.intervalIndexAfter), (false, 4, 0));
+      expect((review.isCorrect, review.rating), (false, ReviewRating.again));
+    });
+  });
+
+  testWidgets('the target retention setting changes the intervals offered', (tester) async {
+    await tester.runAsync(() async {
+      await setUpDb();
+      final q = await due('Q', 'A');
+      final card = SrsCard(
+        state: srsStateReview,
+        stability: 10,
+        difficulty: 5,
+        due: weekAgo,
+        lastReview: weekAgo.subtract(const Duration(days: 10)),
+      );
+      await questions.updateScheduling(q.id, card);
+      await const AppSettingsStore().save(const AppSettings(desiredRetention: maxDesiredRetention));
+      await show(tester);
+
+      await tester.enterText(find.byType(TextField), 'A');
+      await submit(tester, 'Correct!');
+      await rate(tester, ReviewRating.good);
+
+      final strict = buildScheduler(desiredRetention: maxDesiredRetention);
+      final answeredAt = (await ReviewsRepo(db).listForQuestion(q.id)).single.askedAt;
+      expect((await questions.get(q.id)).nextDueAt, reviewCard(card, ReviewRating.good, answeredAt, scheduler: strict).due);
     });
   });
 
@@ -125,6 +197,7 @@ void main() {
       // Choices lock once answered.
       // ignore: deprecated_member_use
       expect(tester.widget<RadioListTile<String>>(find.byType(RadioListTile<String>).first).onChanged, isNull);
+      await rate(tester, ReviewRating.good);
       final review = (await ReviewsRepo(db).listForQuestion(q.id)).single;
       expect((review.givenAnswer, review.gradingMethod), ('Nucleus', gradingMethodMcqExact));
     });
@@ -137,6 +210,7 @@ void main() {
       await show(tester);
 
       await submit(tester, 'Incorrect. Expected: Nucleus');
+      await rate(tester, ReviewRating.again);
       expect((await ReviewsRepo(db).listForQuestion(q.id)).single.givenAnswer, '');
     });
   });
@@ -164,8 +238,7 @@ void main() {
       expect(find.text('1 more due after this one'), findsOneWidget);
 
       await submit(tester, 'Incorrect');
-      await tester.tap(find.text('Next'));
-      await tester.pump();
+      await rate(tester, ReviewRating.again);
       expect(find.text('Second'), findsOneWidget);
       expect(find.text('0 more due after this one'), findsOneWidget);
     });

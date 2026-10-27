@@ -2,9 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizapp/core/models.dart';
+import 'package:quizapp/core/scheduling.dart';
 import 'package:quizapp/services/data_export_service.dart';
+import 'package:quizapp/storage/db.dart';
 import 'package:quizapp/storage/folders_repo.dart';
 import 'package:quizapp/storage/notes_repo.dart';
+import 'package:quizapp/storage/problems_repo.dart';
 import 'package:quizapp/storage/questions_repo.dart';
 import 'package:quizapp/storage/reviews_repo.dart';
 
@@ -15,9 +18,17 @@ void main() {
 
   test('buildExport on an empty database has every table, empty', () async {
     final export = await DataExportService(await openTestDatabase()).buildExport();
-    expect(export['schema_version'], 1);
+    expect(export['schema_version'], schemaVersion);
     expect(DateTime.parse(export['exported_at'] as String).isUtc, isTrue);
-    for (final table in ['folders', 'notes', 'questions', 'question_choices', 'question_history']) {
+    for (final table in [
+      'folders',
+      'notes',
+      'questions',
+      'question_choices',
+      'question_history',
+      'problems',
+      'problem_attempts',
+    ]) {
       expect(export[table], isEmpty, reason: table);
     }
   });
@@ -28,7 +39,10 @@ void main() {
     final note = await NotesRepo(db).create(folder.id, 'Optics', 'Light bends.', sourceFilename: 'optics.md');
     final question = await QuestionsRepo(db)
         .create(note.id, questionTypeMultipleChoice, 'Bends?', 'Yes', choices: [('Yes', true), ('No', false)]);
-    await ReviewsRepo(db).record(question.id, 'Yes', true, 0, 1, gradingMethodMcqExact);
+    await ReviewsRepo(db).record(question.id, 'Yes', true, ReviewRating.good, gradingMethodMcqExact, question.card);
+    final problem = await ProblemsRepo(db).create('Two Sum', difficulty: problemDifficultyEasy);
+    await ProblemsRepo(db)
+        .recordAttempt(problem.id, solved: true, rating: ReviewRating.good, after: newCard(utcNow()), durationMinutes: 12);
 
     final export = await DataExportService(db).buildExport();
     expect((export['folders'] as List).single['name'], 'Physics');
@@ -36,6 +50,8 @@ void main() {
     expect((export['questions'] as List).single['prompt'], 'Bends?');
     expect(export['question_choices'] as List, hasLength(2));
     expect((export['question_history'] as List).single['given_answer'], 'Yes');
+    expect((export['problems'] as List).single['title'], 'Two Sum');
+    expect((export['problem_attempts'] as List).single['duration_minutes'], 12);
   });
 
   test('exportFile is a pretty-printed JSON file with a filesystem-safe timestamped name', () async {

@@ -2,7 +2,7 @@
 
 `.github/workflows/build.yml` builds a Windows installer and a Linux
 AppImage automatically whenever a GitHub release is created, and attaches
-both to it, the same pattern used by the sibling `Quiz-app-Ai` (Python) and
+both to it, the same pattern used by the [`Quiz-app-Ai`](https://github.com/LoganShmogan/Quiz-app-Ai) (Python) and
 `kioskSigningSystem` projects' own `build.yml` workflows.
 
 ## Why this isn't quite the same as PyInstaller `--onefile`
