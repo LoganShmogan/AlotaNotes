@@ -1,0 +1,23 @@
+name: Backend
+
+on:
+  push:
+    paths: ['backend/**', 'package.json', 'package-lock.json', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['backend/**', 'package.json', 'package-lock.json', '.github/workflows/backend.yml']
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Type-check
+        run: npm run typecheck --workspace backend
+      - name: Test with coverage
+        run: npm run coverage --workspace backend

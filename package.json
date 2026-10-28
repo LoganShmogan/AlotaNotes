@@ -1,0 +1,12 @@
+{
+  "name": "quillfin",
+  "private": true,
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "backend:dev": "npm run dev --workspace backend",
+    "backend:test": "npm test --workspace backend",
+    "backend:typecheck": "npm run typecheck --workspace backend"
+  }
+}

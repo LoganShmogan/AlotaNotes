@@ -277,4 +277,30 @@ Still open from §5 (not blocking the next phases):
   tests instead.
 - Account still uses the local admin/1234 sign-in until Phase 3.
 
-**Next: Phase 2, the Convex backend.**
+**Phase 2 (Convex backend): done, 2026-10-28.** See `backend.md`.
+
+- **Schema** for users, the seven synced tables, subscriptions and usage.
+  Synced rows mirror the local SQLite tables, with parent `uid`s.
+- **Sync**: `sync:push` (last-writer-wins, clamped clocks, append-only
+  history, tombstones, the size and row limits) and `sync:pull` (paged by
+  `seq` across all tables).
+- **Plans and usage**: limits in `plans.ts`, `billing:me`, and a monthly
+  AI allowance that is reserved before the model call and refunded on
+  failure.
+- **AI generation** on QuillFin's Anthropic key, using the app's prompt.
+- **Stripe**: Checkout, the Billing Portal, and a signature-checked
+  webhook that always stores Stripe's current copy of the subscription.
+- **Auth**: one Clerk issuer, accepting the web app's `convex` JWT and the
+  Flutter app's OAuth ID token.
+- **Tests**: 64 vitest + convex-test tests, 100% line coverage of
+  `backend/convex/`, run in CI (`.github/workflows/backend.yml`).
+- **Setup**: `setup_guide.md` covers the account steps. No real accounts
+  exist yet; development uses an anonymous local Convex deployment.
+
+Deferred from Phase 2:
+
+- Account deletion (batched deletes, Stripe cancel, Clerk delete) moves to
+  Phase 5 with the rest of the store requirements.
+- Web-app read indexes move to Phase 4.
+
+**Next: Phase 3, Flutter accounts and sync.**

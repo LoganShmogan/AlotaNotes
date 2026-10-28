@@ -40,7 +40,9 @@ where useful, its algorithms ported to Dart), not its code. See
 
 QuillFin is moving to accounts (Clerk), sync (Convex) and a Pro plan
 (Stripe), with a Next.js web app alongside this Flutter app. The plan,
-including per-screen-size layouts, is in `Docs/quillfin_plan.md`.
+including per-screen-size layouts, is in `Docs/quillfin_plan.md`. The
+Convex backend is in `backend/` (see `Docs/backend.md`); the apps don't use
+it yet.
 
 ## Quick start
 
@@ -63,7 +65,7 @@ flutter analyze
 flutter test
 ```
 
-277 tests covering pure logic (scheduling, grading, text extraction), storage
+318 tests covering pure logic (scheduling, grading, text extraction), storage
 repositories (real in-memory SQLite), AI providers (HTTP-mocked, no real
 network/API key needed), and widget tests for every screen (real
 `tester.tap()` interaction, not device input simulation). Line coverage of
@@ -82,6 +84,14 @@ flutter test integration_test -d linux
 
 It needs the Linux desktop toolchain installed; see `Docs/testing.md`.
 
+The Convex backend has its own suite (vitest + convex-test, 100% line
+coverage of `backend/convex/`), run from the repo root with Node 24:
+
+```bash
+npm install
+npm run backend:test
+```
+
 ## Documentation
 
 Everything needed to understand and extend this codebase lives in `Docs/`:
@@ -92,6 +102,10 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
 - `scheduling_algorithm.md`, FSRS scheduling, ratings and the v1 migration
 - `ai_providers.md`, the AI provider abstraction (OpenAI/Anthropic), how to
   add a third
+- `backend.md`, the Convex backend: sync protocol, plans and usage, AI
+  generation, billing, environment variables
+- `setup_guide.md`, creating the Convex, Clerk, Stripe and Anthropic
+  accounts and keys
 - `quillfin_plan.md`, the production plan: architecture, sync, pricing,
   layouts per screen size, phases
 - `gui_theming.md`, the (placeholder) QuillFin brand tokens and theme
