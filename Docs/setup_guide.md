@@ -5,8 +5,8 @@ the backend runs on a local anonymous Convex deployment and all its tests
 pass with fakes (see `backend.md`). Do them in order: Convex first, because
 Clerk and Stripe both need its URLs.
 
-This guide covers the backend (Phase 2) and the Flutter app (Phase 3).
-Phase 4 adds the web app's settings.
+This guide covers the backend (Phase 2), the Flutter app (Phase 3) and the
+web app (Phase 4).
 
 ## 1. Convex
 
@@ -128,6 +128,33 @@ Do this in **test mode** first. Repeat it in live mode before launch.
    - Settings > Plan shows Free with 0 of 20, and **Upgrade monthly** opens
      Stripe Checkout in test mode (card `4242 4242 4242 4242`). After
      paying, coming back to the app shows Pro.
+
+## 7. The web app
+
+1. Copy `webapp/.env.example` to `webapp/.env.local` (git-ignored) and fill
+   it in:
+   - `NEXT_PUBLIC_CONVEX_URL`: the deployment URL from step 1.3.
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`: from Clerk,
+     Configure > API keys. The secret key belongs only in the web host's
+     environment, never in the repo or the browser.
+
+   The Clerk JWT template named `convex` from step 2.2 is what the web app
+   sends to Convex.
+2. Run `npm run web:dev` and sign up at http://localhost:3000.
+3. Deploy, for example on Vercel:
+   - root directory `webapp`, install command `npm ci` (run from the repo
+     root, for the workspaces);
+   - the same three environment variables;
+   - in Clerk, add the production domain;
+   - set Convex's `SITE_URL` (step 4.4) to the web app's URL, since Stripe
+     returns there.
+4. Check, on the first real run:
+   - Sign up on the web, then sign in to the app with the same account:
+     notes made on either side appear on the other (the app after **Sync
+     now**).
+   - Answer a question on the web, then check it isn't due in the app.
+   - Settings > Plan: **Upgrade** opens Stripe Checkout, and after paying the
+     page changes to Pro by itself.
 
 ## Production
 

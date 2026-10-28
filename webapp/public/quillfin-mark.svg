@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="QuillFin">
+  <!-- Placeholder mark: a quill nib whose feather sweeps into a fin. Same
+       geometry as QuillFinMark in lib/theme/widgets.dart. -->
+  <path fill="#0F8A7E" d="M12 54C12 32 28 12 54 8C52 22 46 32 36 38L42 40C34 48 24 52 12 54Z"/>
+  <path stroke="#0F8A7E" stroke-width="3.2" stroke-linecap="round" d="M8 58L30 36"/>
+</svg>

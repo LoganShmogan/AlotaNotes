@@ -35,13 +35,21 @@ export default defineSchema({
     .index("by_clerk_id", ["clerkId"])
     .index("by_stripe_customer", ["stripeCustomerId"]),
 
-  folders: synced(syncedTables.folders),
-  notes: synced(syncedTables.notes),
-  questions: synced(syncedTables.questions),
-  questionChoices: synced(syncedTables.questionChoices),
-  questionHistory: synced(syncedTables.questionHistory),
-  problems: synced(syncedTables.problems),
-  problemAttempts: synced(syncedTables.problemAttempts),
+  // The extra indexes serve the web app, which reads Convex directly: rows
+  // by parent (and for deleting a parent's children), and by date.
+  folders: synced(syncedTables.folders).index("by_parent", ["userId", "data.parentFolderUid"]),
+  notes: synced(syncedTables.notes).index("by_folder", ["userId", "data.folderUid"]),
+  questions: synced(syncedTables.questions)
+    .index("by_note", ["userId", "data.noteUid"])
+    .index("by_due", ["userId", "data.nextDueAt"]),
+  questionChoices: synced(syncedTables.questionChoices).index("by_question", ["userId", "data.questionUid"]),
+  questionHistory: synced(syncedTables.questionHistory)
+    .index("by_question", ["userId", "data.questionUid"])
+    .index("by_asked", ["userId", "data.askedAt"]),
+  problems: synced(syncedTables.problems).index("by_due", ["userId", "data.nextDueAt"]),
+  problemAttempts: synced(syncedTables.problemAttempts)
+    .index("by_problem", ["userId", "data.problemUid"])
+    .index("by_attempted", ["userId", "data.attemptedAt"]),
 
   // Written only by the Stripe webhook, from Stripe's own copy of the
   // subscription, so it is never ahead of or behind Stripe for long.

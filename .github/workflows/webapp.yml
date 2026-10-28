@@ -1,0 +1,31 @@
+name: Web app
+
+on:
+  push:
+    paths: ['webapp/**', 'backend/convex/**', 'package.json', 'package-lock.json', '.github/workflows/webapp.yml']
+  pull_request:
+    paths: ['webapp/**', 'backend/convex/**', 'package.json', 'package-lock.json', '.github/workflows/webapp.yml']
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Type-check
+        run: npm run typecheck --workspace webapp
+      - name: Test
+        run: npm test --workspace webapp
+      - name: Build
+        # Placeholder keys: the build only needs them to be well-formed.
+        run: npm run build --workspace webapp
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_CONVEX_URL: https://placeholder.convex.cloud
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_cGxhY2Vob2xkZXIuY2xlcmsuYWNjb3VudHMuZGV2JA==
+          CLERK_SECRET_KEY: sk_test_placeholder

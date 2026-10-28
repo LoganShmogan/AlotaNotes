@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "./brand.css";
+
+/* Breakpoints match the app's window size classes (lib/layout/breakpoints.dart):
+   sm = medium (600), md = expanded (840), lg = large (1200), xl = extra-large (1600). */
+@theme {
+  --breakpoint-sm: 37.5rem;
+  --breakpoint-md: 52.5rem;
+  --breakpoint-lg: 75rem;
+  --breakpoint-xl: 100rem;
+  --breakpoint-2xl: initial;
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-tint: var(--surface-tint);
+  --color-fin: var(--fin);
+  --color-on-fin: var(--on-fin);
+  --color-deep: var(--deep);
+  --color-on-deep: var(--on-deep);
+  --color-quill: var(--quill);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-line: var(--line);
+
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 14px;
+  --radius-control: 12px;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+:focus-visible {
+  outline: 2px solid var(--fin);
+  outline-offset: 2px;
+}

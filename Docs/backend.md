@@ -17,6 +17,11 @@ backend/
     plans.ts           every plan and sync limit, in one place
     users.ts           identity helpers; users:ensure, users:me
     sync.ts            sync:push, sync:pull
+    rows.ts            RowWriter: every write to a synced table (seq, row counts, tombstones, cascades)
+    folders.ts, notes.ts, questions.ts, problems.ts, today.ts
+                       the web app's data functions (see "The web app's functions")
+    scheduling.ts      FSRS, a direct port of the Dart scheduler the app uses
+    grading.ts         short-answer grading, ported from lib/core/grading.dart
     billing.ts         billing:me; usage reservation; subscription bookkeeping
     ai.ts              ai:generateQuestions
     aiPrompts.ts       prompt and parser, ported from lib/ai/
@@ -32,7 +37,7 @@ backend/
 
 ```bash
 npm install                 # from the repo root (npm workspaces)
-npm run backend:test        # 64 tests
+npm run backend:test        # 131 tests
 npm run coverage --workspace backend
 npm run backend:typecheck
 ```
@@ -142,6 +147,55 @@ has never pushed gets `{ changes: {}, cursor: since, hasMore: false }`.
 - Treat a pulled row whose parent `uid` isn't known yet as pending. A page
   can contain a child before its parent arrives.
 
+## The web app's functions
+
+The web app (`webapp.md`) reads and writes Convex directly. Its functions all
+act on the signed-in user's rows only, and all writes go through `RowWriter`
+(`rows.ts`), the same path `sync:push` uses. So every web edit gets the next
+`seq` and reaches the apps on their next pull, row limits and the note size
+limit apply, and deletes become tombstones.
+
+| Module | Functions |
+|---|---|
+| `folders` | `list`, `create`, `rename`, `remove` (with subfolders, notes, their questions) |
+| `notes` | `listByFolder`, `get`, `create`, `update`, `remove` (with its questions) |
+| `questions` | `listByNote`, `due`, `saveGenerated`, `update`, `setActive`, `remove`, `record` |
+| `problems` | `list`, `get`, `create`, `update`, `remove`, `logAttempt` |
+| `today` | `summary` (due counts, today's reviews and attempts, problems due, 7-day forecast) |
+
+- Rows the web creates get the same 32-hex `uid` form as the app's, and the
+  same field values. For example, a new question is a fresh FSRS card due
+  now, and tags are trimmed, lower-cased and de-duplicated.
+- **Removing on the web cascades on the server**: the app deletes children
+  by `ON DELETE CASCADE` and pushes their tombstones, but the web has to
+  tombstone them itself.
+- **`questions:record` and `problems:logAttempt` schedule on the server**
+  with `scheduling.ts`, at the server's time, and add the history row. The
+  browser grades answers itself (`grading.ts`) so feedback is instant.
+- Queries that depend on the time (`questions:due`, `today:summary`) take
+  `now` from the client, so their results stay cached between ticks; the
+  client also sends the start of its local day.
+- `schema.ts` adds indexes for these: rows by parent uid, questions and
+  problems by `nextDueAt`, history by `askedAt`, attempts by `attemptedAt`.
+
+### FSRS parity
+
+`scheduling.ts` ports the Dart `fsrs` 2.0.1 package's `reviewCard` as the
+app configures it: the package's default weights, learning steps of 1 and
+10 minutes, a relearning step of 10 minutes, and no fuzzing. It's a port
+rather than `ts-fsrs` because that library's defaults and step handling
+differ, and a review must come out the same on any device.
+`tests/fixtures/fsrs_parity.json` holds 36 rating sequences at three target
+recalls, all run through the app's own scheduler by
+`tool/fsrs_parity_fixture.dart`. The tests replay them and require the same
+state, step, stability, difficulty (to 1e-9), and due time to the
+millisecond. Regenerate the fixture after any change to the app's
+scheduling:
+
+```bash
+dart run tool/fsrs_parity_fixture.dart > backend/tests/fixtures/fsrs_parity.json
+```
+
 ## Plans and usage
 
 `plans.ts` holds the limits: Free 20 and Pro 500 AI generations a month on
@@ -210,8 +264,6 @@ The webhook URL is the deployment's **site** URL:
 - **Account deletion** (Phase 5): removing a user's rows needs batched,
   scheduled deletes (up to 350,000 rows), plus cancelling Stripe and
   deleting the Clerk user.
-- **Indexes for the web app** (Phase 4): the web app reads Convex directly
-  and will need indexes such as notes by folder.
 - **Rebuilding FSRS cards from history** after two offline devices review
   the same card. Last-writer-wins keeps the later review, and both history
   rows survive (`quillfin_plan.md` §3).

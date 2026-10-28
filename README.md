@@ -43,7 +43,7 @@ QuillFin is moving to accounts (Clerk), sync (Convex) and a Pro plan
 (Stripe), with a Next.js web app alongside this Flutter app. The plan,
 including per-screen-size layouts, is in `Docs/quillfin_plan.md`. The
 Convex backend is in `backend/` (see `Docs/backend.md`), and this app syncs
-with it when signed in.
+with it when signed in. The web app is in `webapp/` (see `Docs/webapp.md`).
 
 ## Quick start
 
@@ -86,12 +86,15 @@ flutter test integration_test -d linux
 
 It needs the Linux desktop toolchain installed; see `Docs/testing.md`.
 
-The Convex backend has its own suite (vitest + convex-test, 100% line
-coverage of `backend/convex/`), run from the repo root with Node 24:
+The Convex backend and the web app have their own suites, run from the repo
+root with Node 24. The backend has 131 tests (Vitest and convex-test) with
+100% line coverage of `backend/convex/`, including FSRS parity with this
+app's scheduler. The web app has 31 (Vitest and Testing Library):
 
 ```bash
 npm install
 npm run backend:test
+npm run web:test
 ```
 
 ## Documentation
@@ -106,6 +109,8 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
   add a third
 - `accounts_and_sync.md`, signing in from the app, the local sync columns
   and triggers, the sync engine, Settings > Sync / Plan, build config
+- `webapp.md`, the Next.js web app: screens, layouts, how it shares the
+  backend's code, tests
 - `backend.md`, the Convex backend: sync protocol, plans and usage, AI
   generation, billing, environment variables
 - `setup_guide.md`, creating the Convex, Clerk, Stripe and Anthropic

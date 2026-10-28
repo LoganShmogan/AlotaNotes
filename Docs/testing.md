@@ -53,6 +53,12 @@ sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
 Nothing here counts towards the coverage number above; `flutter test
 --coverage` only runs `test/`.
 
+## Backend and web app
+
+From the repo root: `npm run backend:test` (131 tests, `npm run coverage
+--workspace backend` for coverage) and `npm run web:test` (31). See
+`backend.md` (including "FSRS parity") and `webapp.md`, "Testing".
+
 ## Live sync check
 
 `test/sync/convex_live_test.dart` runs sync between two "devices" and two

@@ -2,11 +2,15 @@
   "name": "quillfin",
   "private": true,
   "workspaces": [
-    "backend"
+    "backend",
+    "webapp"
   ],
   "scripts": {
     "backend:dev": "npm run dev --workspace backend",
     "backend:test": "npm test --workspace backend",
-    "backend:typecheck": "npm run typecheck --workspace backend"
+    "backend:typecheck": "npm run typecheck --workspace backend",
+    "web:dev": "npm run dev --workspace webapp",
+    "web:test": "npm test --workspace webapp",
+    "web:build": "npm run build --workspace webapp"
   }
 }

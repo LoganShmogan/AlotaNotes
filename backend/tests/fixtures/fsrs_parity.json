@@ -1,0 +1,2156 @@
+{
+ "cases": [
+  {
+   "name": "good all the way",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767604200000,
+     "state": 2,
+     "step": null,
+     "stability": 13.732137380726128,
+     "difficulty": 4.851595738276286,
+     "due": 1768813800000,
+     "retrievabilityAfterADay": 0.9901946438816693
+    },
+    {
+     "rating": 3,
+     "at": 1768813800000,
+     "state": 2,
+     "step": null,
+     "stability": 45.23094819820455,
+     "difficulty": 4.835248553486574,
+     "due": 1772701800000,
+     "retrievabilityAfterADay": 0.9969613740458806
+    },
+    {
+     "rating": 3,
+     "at": 1772701800000,
+     "state": 2,
+     "step": null,
+     "stability": 134.55039130980634,
+     "difficulty": 4.819014164271911,
+     "due": 1784365800000,
+     "retrievabilityAfterADay": 0.9989723223703121
+    },
+    {
+     "rating": 3,
+     "at": 1784365800000,
+     "state": 2,
+     "step": null,
+     "stability": 371.8835324313401,
+     "difficulty": 4.8028917923428285,
+     "due": 1816506600000,
+     "retrievabilityAfterADay": 0.9996274457973277
+    }
+   ]
+  },
+  {
+   "name": "easy first",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 4,
+     "at": 1767258000000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1768640400000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 3,
+     "at": 1768640400000,
+     "state": 2,
+     "step": null,
+     "stability": 65.44059701239357,
+     "difficulty": 2.482438522375996,
+     "due": 1774256400000,
+     "retrievabilityAfterADay": 0.997893866787044
+    },
+    {
+     "rating": 4,
+     "at": 1774256400000,
+     "state": 2,
+     "step": null,
+     "stability": 578.796680819496,
+     "difficulty": 1.0,
+     "due": 1824282000000,
+     "retrievabilityAfterADay": 0.9997605339947436
+    }
+   ]
+  },
+  {
+   "name": "again then good",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 1,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.2172,
+     "difficulty": 7.0114,
+     "due": 1767258060000,
+     "retrievabilityAfterADay": 0.7507512420815782
+    },
+    {
+     "rating": 1,
+     "at": 1767258060000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.07702568291149846,
+     "difficulty": 8.362964401039063,
+     "due": 1767258120000,
+     "retrievabilityAfterADay": 0.6309118693260194
+    },
+    {
+     "rating": 3,
+     "at": 1767258120000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.14311236668214758,
+     "difficulty": 8.32238877247629,
+     "due": 1767258720000,
+     "retrievabilityAfterADay": 0.7024730462849832
+    },
+    {
+     "rating": 3,
+     "at": 1767258720000,
+     "state": 2,
+     "step": null,
+     "stability": 0.24325260022426476,
+     "difficulty": 8.282093115750598,
+     "due": 1767345120000,
+     "retrievabilityAfterADay": 0.7636347841544904
+    },
+    {
+     "rating": 3,
+     "at": 1767345120000,
+     "state": 2,
+     "step": null,
+     "stability": 1.2123398628866466,
+     "difficulty": 8.242075499056314,
+     "due": 1767431520000,
+     "retrievabilityAfterADay": 0.9134971475875251
+    }
+   ]
+  },
+  {
+   "name": "hard steps",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 2,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 1.1771,
+     "difficulty": 6.243132948566265,
+     "due": 1767258330000,
+     "retrievabilityAfterADay": 0.9115197399520251
+    },
+    {
+     "rating": 2,
+     "at": 1767258330000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.6956716322824089,
+     "difficulty": 7.086328445087965,
+     "due": 1767258660000,
+     "retrievabilityAfterADay": 0.870821471238455
+    },
+    {
+     "rating": 3,
+     "at": 1767258660000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.9421106931418148,
+     "difficulty": 7.054561604621252,
+     "due": 1767259260000,
+     "retrievabilityAfterADay": 0.8955378211626778
+    },
+    {
+     "rating": 2,
+     "at": 1767259260000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.5748973407025891,
+     "difficulty": 7.704435715063404,
+     "due": 1767259860000,
+     "retrievabilityAfterADay": 0.8536235619172685
+    },
+    {
+     "rating": 3,
+     "at": 1767259860000,
+     "state": 2,
+     "step": null,
+     "stability": 0.8001811374606437,
+     "difficulty": 7.668403934433861,
+     "due": 1767346260000,
+     "retrievabilityAfterADay": 0.8826439972560962
+    }
+   ]
+  },
+  {
+   "name": "lapse and relearn",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767604200000,
+     "state": 2,
+     "step": null,
+     "stability": 13.732137380726128,
+     "difficulty": 4.851595738276286,
+     "due": 1768813800000,
+     "retrievabilityAfterADay": 0.9901946438816693
+    },
+    {
+     "rating": 1,
+     "at": 1768813800000,
+     "state": 3,
+     "step": 0,
+     "stability": 2.573507328977937,
+     "difficulty": 7.217396282140251,
+     "due": 1768814400000,
+     "retrievabilityAfterADay": 0.9533992955036734
+    },
+    {
+     "rating": 2,
+     "at": 1768814400000,
+     "state": 3,
+     "step": 0,
+     "stability": 1.3592511917437893,
+     "difficulty": 7.8284753299174525,
+     "due": 1768815300000,
+     "retrievabilityAfterADay": 0.9208572471654256
+    },
+    {
+     "rating": 3,
+     "at": 1768815300000,
+     "state": 2,
+     "step": null,
+     "stability": 1.6718437588742694,
+     "difficulty": 7.791587675945416,
+     "due": 1768988100000,
+     "retrievabilityAfterADay": 0.9329534218965003
+    },
+    {
+     "rating": 3,
+     "at": 1768988100000,
+     "state": 2,
+     "step": null,
+     "stability": 4.532733165446971,
+     "difficulty": 7.754954546785787,
+     "due": 1769420100000,
+     "retrievabilityAfterADay": 0.9719280776289397
+    }
+   ]
+  },
+  {
+   "name": "late reviews",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767777000000,
+     "state": 2,
+     "step": null,
+     "stability": 17.21134109011718,
+     "difficulty": 4.851595738276286,
+     "due": 1769245800000,
+     "retrievabilityAfterADay": 0.9921305105619295
+    },
+    {
+     "rating": 3,
+     "at": 1770109800000,
+     "state": 2,
+     "step": null,
+     "stability": 70.13447616466107,
+     "difficulty": 4.835248553486574,
+     "due": 1776157800000,
+     "retrievabilityAfterADay": 0.9980339945239517
+    },
+    {
+     "rating": 1,
+     "at": 1778749800000,
+     "state": 3,
+     "step": 0,
+     "stability": 5.802899515853928,
+     "difficulty": 7.2087256752428015,
+     "due": 1778750400000,
+     "retrievabilityAfterADay": 0.9776746343083162
+    },
+    {
+     "rating": 3,
+     "at": 1778750400000,
+     "state": 2,
+     "step": null,
+     "stability": 5.802899515853928,
+     "difficulty": 7.176114293888021,
+     "due": 1779268800000,
+     "retrievabilityAfterADay": 0.9776746343083162
+    }
+   ]
+  },
+  {
+   "name": "early same-day reviews",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258300000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767603900000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767603900000,
+     "state": 2,
+     "step": null,
+     "stability": 13.732137380726128,
+     "difficulty": 4.851595738276286,
+     "due": 1768813500000,
+     "retrievabilityAfterADay": 0.9901946438816693
+    },
+    {
+     "rating": 3,
+     "at": 1768777500000,
+     "state": 2,
+     "step": null,
+     "stability": 43.466477029187324,
+     "difficulty": 4.835248553486574,
+     "due": 1772492700000,
+     "retrievabilityAfterADay": 0.9968391893834609
+    },
+    {
+     "rating": 4,
+     "at": 1772489100000,
+     "state": 2,
+     "step": null,
+     "stability": 296.3441591471406,
+     "difficulty": 3.6241584087864656,
+     "due": 1798063500000,
+     "retrievabilityAfterADay": 0.9995326132457296
+    }
+   ]
+  },
+  {
+   "name": "mixed",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 4,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 7.513226867074781,
+     "difficulty": 3.6846254319625134,
+     "due": 1767949800000,
+     "retrievabilityAfterADay": 0.9824969519282516
+    },
+    {
+     "rating": 2,
+     "at": 1768036200000,
+     "state": 2,
+     "step": null,
+     "stability": 12.94649280737451,
+     "difficulty": 5.137380642346799,
+     "due": 1769159400000,
+     "retrievabilityAfterADay": 0.9896179013225092
+    },
+    {
+     "rating": 1,
+     "at": 1769159400000,
+     "state": 3,
+     "step": 0,
+     "stability": 2.4740931230236085,
+     "difficulty": 7.368977645677542,
+     "due": 1769160000000,
+     "retrievabilityAfterADay": 0.9517811280893662
+    },
+    {
+     "rating": 1,
+     "at": 1769160000000,
+     "state": 3,
+     "step": 0,
+     "stability": 0.6185355274448284,
+     "difficulty": 8.552624898602932,
+     "due": 1769160600000,
+     "retrievabilityAfterADay": 0.8603659802728428
+    },
+    {
+     "rating": 3,
+     "at": 1769160600000,
+     "state": 2,
+     "step": null,
+     "stability": 0.8519158245990543,
+     "difficulty": 8.510740612606966,
+     "due": 1769247000000,
+     "retrievabilityAfterADay": 0.8877072617647123
+    },
+    {
+     "rating": 4,
+     "at": 1769265000000,
+     "state": 2,
+     "step": null,
+     "stability": 4.460085384335169,
+     "difficulty": 8.124607905838802,
+     "due": 1769610600000,
+     "retrievabilityAfterADay": 0.9715084702989014
+    },
+    {
+     "rating": 2,
+     "at": 1769610600000,
+     "state": 2,
+     "step": null,
+     "stability": 5.5356823284910766,
+     "difficulty": 8.519545451523188,
+     "due": 1770129000000,
+     "retrievabilityAfterADay": 0.9766701193112717
+    }
+   ]
+  },
+  {
+   "name": "learning step reviewed days late",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767431400000,
+     "state": 2,
+     "step": null,
+     "stability": 9.056553942430762,
+     "difficulty": 4.868056502338024,
+     "due": 1768209000000,
+     "retrievabilityAfterADay": 0.9853513449794518
+    },
+    {
+     "rating": 3,
+     "at": 1768209000000,
+     "state": 2,
+     "step": null,
+     "stability": 30.3378884119624,
+     "difficulty": 4.851595738276286,
+     "due": 1770801000000,
+     "retrievabilityAfterADay": 0.9954897756271839
+    }
+   ]
+  },
+  {
+   "name": "relearning reviewed days late",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767604200000,
+     "state": 2,
+     "step": null,
+     "stability": 13.732137380726128,
+     "difficulty": 4.851595738276286,
+     "due": 1768813800000,
+     "retrievabilityAfterADay": 0.9901946438816693
+    },
+    {
+     "rating": 1,
+     "at": 1768813800000,
+     "state": 3,
+     "step": 0,
+     "stability": 2.573507328977937,
+     "difficulty": 7.217396282140251,
+     "due": 1768814400000,
+     "retrievabilityAfterADay": 0.9533992955036734
+    },
+    {
+     "rating": 2,
+     "at": 1769073600000,
+     "state": 3,
+     "step": 0,
+     "stability": 3.6365861645331092,
+     "difficulty": 7.8284753299174525,
+     "due": 1769074500000,
+     "retrievabilityAfterADay": 0.9656934652506414
+    },
+    {
+     "rating": 3,
+     "at": 1769074500000,
+     "state": 2,
+     "step": null,
+     "stability": 3.883052900788902,
+     "difficulty": 7.791587675945416,
+     "due": 1769420100000,
+     "retrievabilityAfterADay": 0.9676689311676596
+    }
+   ]
+  },
+  {
+   "name": "again on a late learning step",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 2,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 1.1771,
+     "difficulty": 6.243132948566265,
+     "due": 1767258330000,
+     "retrievabilityAfterADay": 0.9115197399520251
+    },
+    {
+     "rating": 1,
+     "at": 1767344730000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.5069286230523538,
+     "difficulty": 7.955472733150378,
+     "due": 1767344790000,
+     "retrievabilityAfterADay": 0.8416304871978538
+    },
+    {
+     "rating": 4,
+     "at": 1767344790000,
+     "state": 2,
+     "step": null,
+     "stability": 1.5264458909253016,
+     "difficulty": 7.444711171297151,
+     "due": 1767517590000,
+     "retrievabilityAfterADay": 0.9278279720772262
+    }
+   ]
+  },
+  {
+   "name": "review card reviewed again the same day",
+   "retention": 0.9,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 4,
+     "at": 1767258000000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1768640400000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 3,
+     "at": 1767261600000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1768644000000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 1,
+     "at": 1767265200000,
+     "state": 3,
+     "step": 0,
+     "stability": 3.0835908333781945,
+     "difficulty": 5.960786586857769,
+     "due": 1767265800000,
+     "retrievabilityAfterADay": 0.960239708939717
+    },
+    {
+     "rating": 3,
+     "at": 1767265800000,
+     "state": 2,
+     "step": null,
+     "stability": 3.3715563882675634,
+     "difficulty": 5.936785985212845,
+     "due": 1767525000000,
+     "retrievabilityAfterADay": 0.9632800879262706
+    }
+   ]
+  },
+  {
+   "name": "good all the way",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1768122600000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1768122600000,
+     "state": 2,
+     "step": null,
+     "stability": 22.563974635601422,
+     "difficulty": 4.851595738276286,
+     "due": 1773911400000,
+     "retrievabilityAfterADay": 0.9939638202068526
+    },
+    {
+     "rating": 3,
+     "at": 1773911400000,
+     "state": 2,
+     "step": null,
+     "stability": 124.41338676274893,
+     "difficulty": 4.835248553486574,
+     "due": 1805706600000,
+     "retrievabilityAfterADay": 0.998888867553745
+    },
+    {
+     "rating": 3,
+     "at": 1805706600000,
+     "state": 2,
+     "step": null,
+     "stability": 588.4191069146536,
+     "difficulty": 4.819014164271911,
+     "due": 1956129000000,
+     "retrievabilityAfterADay": 0.9997644472193707
+    },
+    {
+     "rating": 3,
+     "at": 1956129000000,
+     "state": 2,
+     "step": null,
+     "stability": 2437.6171146094,
+     "difficulty": 4.8028917923428285,
+     "due": 2579245800000,
+     "retrievabilityAfterADay": 0.9999431091603118
+    }
+   ]
+  },
+  {
+   "name": "easy first",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 4,
+     "at": 1767258000000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1771405200000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 3,
+     "at": 1771405200000,
+     "state": 2,
+     "step": null,
+     "stability": 121.05280922371364,
+     "difficulty": 2.482438522375996,
+     "due": 1802336400000,
+     "retrievabilityAfterADay": 0.9988581266354908
+    },
+    {
+     "rating": 4,
+     "at": 1802336400000,
+     "state": 2,
+     "step": null,
+     "stability": 1998.2018468324218,
+     "difficulty": 1.0,
+     "due": 2313133200000,
+     "retrievabilityAfterADay": 0.9999306011649906
+    }
+   ]
+  },
+  {
+   "name": "again then good",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 1,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.2172,
+     "difficulty": 7.0114,
+     "due": 1767258060000,
+     "retrievabilityAfterADay": 0.7507512420815782
+    },
+    {
+     "rating": 1,
+     "at": 1767258060000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.07702568291149846,
+     "difficulty": 8.362964401039063,
+     "due": 1767258120000,
+     "retrievabilityAfterADay": 0.6309118693260194
+    },
+    {
+     "rating": 3,
+     "at": 1767258120000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.14311236668214758,
+     "difficulty": 8.32238877247629,
+     "due": 1767258720000,
+     "retrievabilityAfterADay": 0.7024730462849832
+    },
+    {
+     "rating": 3,
+     "at": 1767258720000,
+     "state": 2,
+     "step": null,
+     "stability": 0.24325260022426476,
+     "difficulty": 8.282093115750598,
+     "due": 1767345120000,
+     "retrievabilityAfterADay": 0.7636347841544904
+    },
+    {
+     "rating": 3,
+     "at": 1767345120000,
+     "state": 2,
+     "step": null,
+     "stability": 1.2123398628866466,
+     "difficulty": 8.242075499056314,
+     "due": 1767690720000,
+     "retrievabilityAfterADay": 0.9134971475875251
+    }
+   ]
+  },
+  {
+   "name": "hard steps",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 2,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 1.1771,
+     "difficulty": 6.243132948566265,
+     "due": 1767258330000,
+     "retrievabilityAfterADay": 0.9115197399520251
+    },
+    {
+     "rating": 2,
+     "at": 1767258330000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.6956716322824089,
+     "difficulty": 7.086328445087965,
+     "due": 1767258660000,
+     "retrievabilityAfterADay": 0.870821471238455
+    },
+    {
+     "rating": 3,
+     "at": 1767258660000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.9421106931418148,
+     "difficulty": 7.054561604621252,
+     "due": 1767259260000,
+     "retrievabilityAfterADay": 0.8955378211626778
+    },
+    {
+     "rating": 2,
+     "at": 1767259260000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.5748973407025891,
+     "difficulty": 7.704435715063404,
+     "due": 1767259860000,
+     "retrievabilityAfterADay": 0.8536235619172685
+    },
+    {
+     "rating": 3,
+     "at": 1767259860000,
+     "state": 2,
+     "step": null,
+     "stability": 0.8001811374606437,
+     "difficulty": 7.668403934433861,
+     "due": 1767432660000,
+     "retrievabilityAfterADay": 0.8826439972560962
+    }
+   ]
+  },
+  {
+   "name": "lapse and relearn",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1768122600000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1768122600000,
+     "state": 2,
+     "step": null,
+     "stability": 22.563974635601422,
+     "difficulty": 4.851595738276286,
+     "due": 1773911400000,
+     "retrievabilityAfterADay": 0.9939638202068526
+    },
+    {
+     "rating": 1,
+     "at": 1773911400000,
+     "state": 3,
+     "step": 0,
+     "stability": 4.127346542111106,
+     "difficulty": 7.217396282140251,
+     "due": 1773912000000,
+     "retrievabilityAfterADay": 0.9694141784280984
+    },
+    {
+     "rating": 2,
+     "at": 1773912000000,
+     "state": 3,
+     "step": 0,
+     "stability": 2.036881838485316,
+     "difficulty": 7.8284753299174525,
+     "due": 1773912900000,
+     "retrievabilityAfterADay": 0.9430792958140465
+    },
+    {
+     "rating": 3,
+     "at": 1773912900000,
+     "state": 2,
+     "step": null,
+     "stability": 2.363842742532748,
+     "difficulty": 7.791587675945416,
+     "due": 1774517700000,
+     "retrievabilityAfterADay": 0.9498491560704811
+    },
+    {
+     "rating": 3,
+     "at": 1774517700000,
+     "state": 2,
+     "step": null,
+     "stability": 9.520755088844142,
+     "difficulty": 7.754954546785787,
+     "due": 1776936900000,
+     "retrievabilityAfterADay": 0.9860362108444549
+    }
+   ]
+  },
+  {
+   "name": "late reviews",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1768122600000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1768295400000,
+     "state": 2,
+     "step": null,
+     "stability": 24.71142763188058,
+     "difficulty": 4.851595738276286,
+     "due": 1774602600000,
+     "retrievabilityAfterADay": 0.99447975122021
+    },
+    {
+     "rating": 3,
+     "at": 1775466600000,
+     "state": 2,
+     "step": null,
+     "stability": 143.3512173210322,
+     "difficulty": 4.835248553486574,
+     "due": 1812100200000,
+     "retrievabilityAfterADay": 0.9990352326801712
+    },
+    {
+     "rating": 1,
+     "at": 1814692200000,
+     "state": 3,
+     "step": 0,
+     "stability": 9.29269394075359,
+     "difficulty": 7.2087256752428015,
+     "due": 1814692800000,
+     "retrievabilityAfterADay": 0.985707931515856
+    },
+    {
+     "rating": 3,
+     "at": 1814692800000,
+     "state": 2,
+     "step": null,
+     "stability": 9.29269394075359,
+     "difficulty": 7.176114293888021,
+     "due": 1817025600000,
+     "retrievabilityAfterADay": 0.985707931515856
+    }
+   ]
+  },
+  {
+   "name": "early same-day reviews",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258300000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1768122300000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1768122300000,
+     "state": 2,
+     "step": null,
+     "stability": 22.563974635601422,
+     "difficulty": 4.851595738276286,
+     "due": 1773911100000,
+     "retrievabilityAfterADay": 0.9939638202068526
+    },
+    {
+     "rating": 3,
+     "at": 1773875100000,
+     "state": 2,
+     "step": null,
+     "stability": 123.50595870670075,
+     "difficulty": 4.835248553486574,
+     "due": 1805411100000,
+     "retrievabilityAfterADay": 0.9988807311673603
+    },
+    {
+     "rating": 4,
+     "at": 1805407500000,
+     "state": 2,
+     "step": null,
+     "stability": 1503.7222895040804,
+     "difficulty": 3.6241584087864656,
+     "due": 2189801100000,
+     "retrievabilityAfterADay": 0.9999077865713623
+    }
+   ]
+  },
+  {
+   "name": "mixed",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 4,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 7.513226867074781,
+     "difficulty": 3.6846254319625134,
+     "due": 1769159400000,
+     "retrievabilityAfterADay": 0.9824969519282516
+    },
+    {
+     "rating": 2,
+     "at": 1769245800000,
+     "state": 2,
+     "step": null,
+     "stability": 17.694554664467717,
+     "difficulty": 5.137380642346799,
+     "due": 1773738600000,
+     "retrievabilityAfterADay": 0.9923405279827092
+    },
+    {
+     "rating": 1,
+     "at": 1773738600000,
+     "state": 3,
+     "step": 0,
+     "stability": 3.6351962736199144,
+     "difficulty": 7.368977645677542,
+     "due": 1773739200000,
+     "retrievabilityAfterADay": 0.9656816386283157
+    },
+    {
+     "rating": 1,
+     "at": 1773739200000,
+     "state": 3,
+     "step": 0,
+     "stability": 0.8599288177915513,
+     "difficulty": 8.552624898602932,
+     "due": 1773739800000,
+     "retrievabilityAfterADay": 0.8884515270663259
+    },
+    {
+     "rating": 3,
+     "at": 1773739800000,
+     "state": 2,
+     "step": null,
+     "stability": 1.1296174105128696,
+     "difficulty": 8.510740612606966,
+     "due": 1773999000000,
+     "retrievabilityAfterADay": 0.9087050245656626
+    },
+    {
+     "rating": 4,
+     "at": 1774017000000,
+     "state": 2,
+     "step": null,
+     "stability": 9.227351324002715,
+     "difficulty": 8.124607905838802,
+     "due": 1776349800000,
+     "retrievabilityAfterADay": 0.9856110097808253
+    },
+    {
+     "rating": 2,
+     "at": 1776349800000,
+     "state": 2,
+     "step": null,
+     "stability": 13.903611854536978,
+     "difficulty": 8.519545451523188,
+     "due": 1779892200000,
+     "retrievabilityAfterADay": 0.9903121048668818
+    }
+   ]
+  },
+  {
+   "name": "learning step reviewed days late",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767431400000,
+     "state": 2,
+     "step": null,
+     "stability": 9.056553942430762,
+     "difficulty": 4.868056502338024,
+     "due": 1769764200000,
+     "retrievabilityAfterADay": 0.9853513449794518
+    },
+    {
+     "rating": 3,
+     "at": 1769764200000,
+     "state": 2,
+     "step": null,
+     "stability": 54.32315774765878,
+     "difficulty": 4.851595738276286,
+     "due": 1783674600000,
+     "retrievabilityAfterADay": 0.9974661050974228
+    }
+   ]
+  },
+  {
+   "name": "relearning reviewed days late",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1768122600000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1768122600000,
+     "state": 2,
+     "step": null,
+     "stability": 22.563974635601422,
+     "difficulty": 4.851595738276286,
+     "due": 1773911400000,
+     "retrievabilityAfterADay": 0.9939638202068526
+    },
+    {
+     "rating": 1,
+     "at": 1773911400000,
+     "state": 3,
+     "step": 0,
+     "stability": 4.127346542111106,
+     "difficulty": 7.217396282140251,
+     "due": 1773912000000,
+     "retrievabilityAfterADay": 0.9694141784280984
+    },
+    {
+     "rating": 2,
+     "at": 1774171200000,
+     "state": 3,
+     "step": 0,
+     "stability": 5.242432379252596,
+     "difficulty": 7.8284753299174525,
+     "due": 1774172100000,
+     "retrievabilityAfterADay": 0.9754581687847531
+    },
+    {
+     "rating": 3,
+     "at": 1774172100000,
+     "state": 2,
+     "step": null,
+     "stability": 5.311132113388028,
+     "difficulty": 7.791587675945416,
+     "due": 1775554500000,
+     "retrievabilityAfterADay": 0.9757532645814998
+    }
+   ]
+  },
+  {
+   "name": "again on a late learning step",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 2,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 1.1771,
+     "difficulty": 6.243132948566265,
+     "due": 1767258330000,
+     "retrievabilityAfterADay": 0.9115197399520251
+    },
+    {
+     "rating": 1,
+     "at": 1767344730000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.5069286230523538,
+     "difficulty": 7.955472733150378,
+     "due": 1767344790000,
+     "retrievabilityAfterADay": 0.8416304871978538
+    },
+    {
+     "rating": 4,
+     "at": 1767344790000,
+     "state": 2,
+     "step": null,
+     "stability": 1.5264458909253016,
+     "difficulty": 7.444711171297151,
+     "due": 1767776790000,
+     "retrievabilityAfterADay": 0.9278279720772262
+    }
+   ]
+  },
+  {
+   "name": "review card reviewed again the same day",
+   "retention": 0.8,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 4,
+     "at": 1767258000000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1771405200000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 3,
+     "at": 1767261600000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1771408800000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 1,
+     "at": 1767265200000,
+     "state": 3,
+     "step": 0,
+     "stability": 3.0835908333781945,
+     "difficulty": 5.960786586857769,
+     "due": 1767265800000,
+     "retrievabilityAfterADay": 0.960239708939717
+    },
+    {
+     "rating": 3,
+     "at": 1767265800000,
+     "state": 2,
+     "step": null,
+     "stability": 3.3715563882675634,
+     "difficulty": 5.936785985212845,
+     "due": 1768129800000,
+     "retrievabilityAfterADay": 0.9632800879262706
+    }
+   ]
+  },
+  {
+   "name": "good all the way",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767345000000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767345000000,
+     "state": 2,
+     "step": null,
+     "stability": 6.693143989438717,
+     "difficulty": 4.851595738276286,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.98047493719581
+    },
+    {
+     "rating": 3,
+     "at": 1767604200000,
+     "state": 2,
+     "step": null,
+     "stability": 15.12319199724068,
+     "difficulty": 4.835248553486574,
+     "due": 1768122600000,
+     "retrievabilityAfterADay": 0.9910727003650628
+    },
+    {
+     "rating": 3,
+     "at": 1768122600000,
+     "state": 2,
+     "step": null,
+     "stability": 30.77756821928203,
+     "difficulty": 4.819014164271911,
+     "due": 1769245800000,
+     "retrievabilityAfterADay": 0.9955533530408115
+    },
+    {
+     "rating": 3,
+     "at": 1769245800000,
+     "state": 2,
+     "step": null,
+     "stability": 61.95682601952603,
+     "difficulty": 4.8028917923428285,
+     "due": 1771492200000,
+     "retrievabilityAfterADay": 0.9977762287801256
+    }
+   ]
+  },
+  {
+   "name": "easy first",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 4,
+     "at": 1767258000000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1767862800000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 3,
+     "at": 1767862800000,
+     "state": 2,
+     "step": null,
+     "stability": 40.942147660181256,
+     "difficulty": 2.482438522375996,
+     "due": 1769331600000,
+     "retrievabilityAfterADay": 0.9966462586861522
+    },
+    {
+     "rating": 4,
+     "at": 1769331600000,
+     "state": 2,
+     "step": null,
+     "stability": 204.54902962779178,
+     "difficulty": 1.0,
+     "due": 1776762000000,
+     "retrievabilityAfterADay": 0.9993232903570902
+    }
+   ]
+  },
+  {
+   "name": "again then good",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 1,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.2172,
+     "difficulty": 7.0114,
+     "due": 1767258060000,
+     "retrievabilityAfterADay": 0.7507512420815782
+    },
+    {
+     "rating": 1,
+     "at": 1767258060000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.07702568291149846,
+     "difficulty": 8.362964401039063,
+     "due": 1767258120000,
+     "retrievabilityAfterADay": 0.6309118693260194
+    },
+    {
+     "rating": 3,
+     "at": 1767258120000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.14311236668214758,
+     "difficulty": 8.32238877247629,
+     "due": 1767258720000,
+     "retrievabilityAfterADay": 0.7024730462849832
+    },
+    {
+     "rating": 3,
+     "at": 1767258720000,
+     "state": 2,
+     "step": null,
+     "stability": 0.24325260022426476,
+     "difficulty": 8.282093115750598,
+     "due": 1767345120000,
+     "retrievabilityAfterADay": 0.7636347841544904
+    },
+    {
+     "rating": 3,
+     "at": 1767345120000,
+     "state": 2,
+     "step": null,
+     "stability": 1.2123398628866466,
+     "difficulty": 8.242075499056314,
+     "due": 1767431520000,
+     "retrievabilityAfterADay": 0.9134971475875251
+    }
+   ]
+  },
+  {
+   "name": "hard steps",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 2,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 1.1771,
+     "difficulty": 6.243132948566265,
+     "due": 1767258330000,
+     "retrievabilityAfterADay": 0.9115197399520251
+    },
+    {
+     "rating": 2,
+     "at": 1767258330000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.6956716322824089,
+     "difficulty": 7.086328445087965,
+     "due": 1767258660000,
+     "retrievabilityAfterADay": 0.870821471238455
+    },
+    {
+     "rating": 3,
+     "at": 1767258660000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.9421106931418148,
+     "difficulty": 7.054561604621252,
+     "due": 1767259260000,
+     "retrievabilityAfterADay": 0.8955378211626778
+    },
+    {
+     "rating": 2,
+     "at": 1767259260000,
+     "state": 1,
+     "step": 1,
+     "stability": 0.5748973407025891,
+     "difficulty": 7.704435715063404,
+     "due": 1767259860000,
+     "retrievabilityAfterADay": 0.8536235619172685
+    },
+    {
+     "rating": 3,
+     "at": 1767259860000,
+     "state": 2,
+     "step": null,
+     "stability": 0.8001811374606437,
+     "difficulty": 7.668403934433861,
+     "due": 1767346260000,
+     "retrievabilityAfterADay": 0.8826439972560962
+    }
+   ]
+  },
+  {
+   "name": "lapse and relearn",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767345000000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767345000000,
+     "state": 2,
+     "step": null,
+     "stability": 6.693143989438717,
+     "difficulty": 4.851595738276286,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.98047493719581
+    },
+    {
+     "rating": 1,
+     "at": 1767604200000,
+     "state": 3,
+     "step": 0,
+     "stability": 1.5574810921775162,
+     "difficulty": 7.217396282140251,
+     "due": 1767604800000,
+     "retrievabilityAfterADay": 0.9289874529288181
+    },
+    {
+     "rating": 2,
+     "at": 1767604800000,
+     "state": 3,
+     "step": 0,
+     "stability": 0.8841754324191115,
+     "difficulty": 7.8284753299174525,
+     "due": 1767605700000,
+     "retrievabilityAfterADay": 0.8906430283020121
+    },
+    {
+     "rating": 3,
+     "at": 1767605700000,
+     "state": 2,
+     "step": null,
+     "stability": 1.1568365593145133,
+     "difficulty": 7.791587675945416,
+     "due": 1767692100000,
+     "retrievabilityAfterADay": 0.910340454828613
+    },
+    {
+     "rating": 3,
+     "at": 1767692100000,
+     "state": 2,
+     "step": null,
+     "stability": 2.761847739050039,
+     "difficulty": 7.754954546785787,
+     "due": 1767778500000,
+     "retrievabilityAfterADay": 0.9561837827769166
+    }
+   ]
+  },
+  {
+   "name": "late reviews",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767345000000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767517800000,
+     "state": 2,
+     "step": null,
+     "stability": 11.687149192372345,
+     "difficulty": 4.851595738276286,
+     "due": 1767949800000,
+     "retrievabilityAfterADay": 0.988537098403813
+    },
+    {
+     "rating": 3,
+     "at": 1768813800000,
+     "state": 2,
+     "step": null,
+     "stability": 44.164176368199335,
+     "difficulty": 4.835248553486574,
+     "due": 1770455400000,
+     "retrievabilityAfterADay": 0.9968886592762637
+    },
+    {
+     "rating": 1,
+     "at": 1773047400000,
+     "state": 3,
+     "step": 0,
+     "stability": 4.539722844324848,
+     "difficulty": 7.2087256752428015,
+     "due": 1773048000000,
+     "retrievabilityAfterADay": 0.9719677974885257
+    },
+    {
+     "rating": 3,
+     "at": 1773048000000,
+     "state": 2,
+     "step": null,
+     "stability": 4.695321764944972,
+     "difficulty": 7.176114293888021,
+     "due": 1773220800000,
+     "retrievabilityAfterADay": 0.972823753868234
+    }
+   ]
+  },
+  {
+   "name": "early same-day reviews",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258300000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767344700000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767344700000,
+     "state": 2,
+     "step": null,
+     "stability": 6.693143989438717,
+     "difficulty": 4.851595738276286,
+     "due": 1767603900000,
+     "retrievabilityAfterADay": 0.98047493719581
+    },
+    {
+     "rating": 3,
+     "at": 1767567900000,
+     "state": 2,
+     "step": null,
+     "stability": 12.559231529281684,
+     "difficulty": 4.835248553486574,
+     "due": 1767999900000,
+     "retrievabilityAfterADay": 0.989307896931078
+    },
+    {
+     "rating": 4,
+     "at": 1767996300000,
+     "state": 2,
+     "step": null,
+     "stability": 45.261197763199824,
+     "difficulty": 3.6241584087864656,
+     "due": 1769637900000,
+     "retrievabilityAfterADay": 0.9969633864351063
+    }
+   ]
+  },
+  {
+   "name": "mixed",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 4,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 7.513226867074781,
+     "difficulty": 3.6846254319625134,
+     "due": 1767517800000,
+     "retrievabilityAfterADay": 0.9824969519282516
+    },
+    {
+     "rating": 2,
+     "at": 1767604200000,
+     "state": 2,
+     "step": null,
+     "stability": 10.340071682754314,
+     "difficulty": 5.137380642346799,
+     "due": 1767949800000,
+     "retrievabilityAfterADay": 0.9871006016254769
+    },
+    {
+     "rating": 1,
+     "at": 1767949800000,
+     "state": 3,
+     "step": 0,
+     "stability": 1.9424791169890143,
+     "difficulty": 7.368977645677542,
+     "due": 1767950400000,
+     "retrievabilityAfterADay": 0.9407681142481091
+    },
+    {
+     "rating": 1,
+     "at": 1767950400000,
+     "state": 3,
+     "step": 0,
+     "stability": 0.5028078421432793,
+     "difficulty": 8.552624898602932,
+     "due": 1767951000000,
+     "retrievabilityAfterADay": 0.8408357744841831
+    },
+    {
+     "rating": 3,
+     "at": 1767951000000,
+     "state": 2,
+     "step": null,
+     "stability": 0.7134469818159849,
+     "difficulty": 8.510740612606966,
+     "due": 1768037400000,
+     "retrievabilityAfterADay": 0.8730040379746729
+    },
+    {
+     "rating": 4,
+     "at": 1768055400000,
+     "state": 2,
+     "step": null,
+     "stability": 4.226087025059073,
+     "difficulty": 8.124607905838802,
+     "due": 1768228200000,
+     "retrievabilityAfterADay": 0.970067160337162
+    },
+    {
+     "rating": 2,
+     "at": 1768228200000,
+     "state": 2,
+     "step": null,
+     "stability": 4.828205289111226,
+     "difficulty": 8.519545451523188,
+     "due": 1768401000000,
+     "retrievabilityAfterADay": 0.9735143615093566
+    }
+   ]
+  },
+  {
+   "name": "learning step reviewed days late",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767431400000,
+     "state": 2,
+     "step": null,
+     "stability": 9.056553942430762,
+     "difficulty": 4.868056502338024,
+     "due": 1767777000000,
+     "retrievabilityAfterADay": 0.9853513449794518
+    },
+    {
+     "rating": 3,
+     "at": 1767777000000,
+     "state": 2,
+     "step": null,
+     "stability": 19.912947397244352,
+     "difficulty": 4.851595738276286,
+     "due": 1768468200000,
+     "retrievabilityAfterADay": 0.9931765282772529
+    }
+   ]
+  },
+  {
+   "name": "relearning reviewed days late",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 3,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 1,
+     "stability": 3.2602,
+     "difficulty": 4.884631634813845,
+     "due": 1767258600000,
+     "retrievabilityAfterADay": 0.9621613629655896
+    },
+    {
+     "rating": 3,
+     "at": 1767258600000,
+     "state": 2,
+     "step": null,
+     "stability": 3.536243655619573,
+     "difficulty": 4.868056502338024,
+     "due": 1767345000000,
+     "retrievabilityAfterADay": 0.9648181092523824
+    },
+    {
+     "rating": 3,
+     "at": 1767345000000,
+     "state": 2,
+     "step": null,
+     "stability": 6.693143989438717,
+     "difficulty": 4.851595738276286,
+     "due": 1767604200000,
+     "retrievabilityAfterADay": 0.98047493719581
+    },
+    {
+     "rating": 1,
+     "at": 1767604200000,
+     "state": 3,
+     "step": 0,
+     "stability": 1.5574810921775162,
+     "difficulty": 7.217396282140251,
+     "due": 1767604800000,
+     "retrievabilityAfterADay": 0.9289874529288181
+    },
+    {
+     "rating": 2,
+     "at": 1767864000000,
+     "state": 3,
+     "step": 0,
+     "stability": 2.530187086064246,
+     "difficulty": 7.8284753299174525,
+     "due": 1767864900000,
+     "retrievabilityAfterADay": 0.9527077859353439
+    },
+    {
+     "rating": 3,
+     "at": 1767864900000,
+     "state": 2,
+     "step": null,
+     "stability": 2.8462348837976186,
+     "difficulty": 7.791587675945416,
+     "due": 1767951300000,
+     "retrievabilityAfterADay": 0.9573258472970565
+    }
+   ]
+  },
+  {
+   "name": "again on a late learning step",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 2,
+     "at": 1767258000000,
+     "state": 1,
+     "step": 0,
+     "stability": 1.1771,
+     "difficulty": 6.243132948566265,
+     "due": 1767258330000,
+     "retrievabilityAfterADay": 0.9115197399520251
+    },
+    {
+     "rating": 1,
+     "at": 1767344730000,
+     "state": 1,
+     "step": 0,
+     "stability": 0.5069286230523538,
+     "difficulty": 7.955472733150378,
+     "due": 1767344790000,
+     "retrievabilityAfterADay": 0.8416304871978538
+    },
+    {
+     "rating": 4,
+     "at": 1767344790000,
+     "state": 2,
+     "step": null,
+     "stability": 1.5264458909253016,
+     "difficulty": 7.444711171297151,
+     "due": 1767431190000,
+     "retrievabilityAfterADay": 0.9278279720772262
+    }
+   ]
+  },
+  {
+   "name": "review card reviewed again the same day",
+   "retention": 0.95,
+   "start": 1767258000000,
+   "reviews": [
+    {
+     "rating": 4,
+     "at": 1767258000000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1767862800000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 3,
+     "at": 1767261600000,
+     "state": 2,
+     "step": null,
+     "stability": 16.1507,
+     "difficulty": 2.482438522375996,
+     "due": 1767866400000,
+     "retrievabilityAfterADay": 0.9916265516943228
+    },
+    {
+     "rating": 1,
+     "at": 1767265200000,
+     "state": 3,
+     "step": 0,
+     "stability": 3.0835908333781945,
+     "difficulty": 5.960786586857769,
+     "due": 1767265800000,
+     "retrievabilityAfterADay": 0.960239708939717
+    },
+    {
+     "rating": 3,
+     "at": 1767265800000,
+     "state": 2,
+     "step": null,
+     "stability": 3.3715563882675634,
+     "difficulty": 5.936785985212845,
+     "due": 1767352200000,
+     "retrievabilityAfterADay": 0.9632800879262706
+    }
+   ]
+  }
+ ],
+ "intervals": [
+  {
+   "ms": 1000,
+   "label": "1m"
+  },
+  {
+   "ms": 59000,
+   "label": "1m"
+  },
+  {
+   "ms": 90000,
+   "label": "2m"
+  },
+  {
+   "ms": 600000,
+   "label": "10m"
+  },
+  {
+   "ms": 3599000,
+   "label": "1h"
+  },
+  {
+   "ms": 3600000,
+   "label": "1h"
+  },
+  {
+   "ms": 5400000,
+   "label": "2h"
+  },
+  {
+   "ms": 86399000,
+   "label": "1d"
+  },
+  {
+   "ms": 86400000,
+   "label": "1d"
+  },
+  {
+   "ms": 129600000,
+   "label": "2d"
+  },
+  {
+   "ms": 2591999000,
+   "label": "1mo"
+  },
+  {
+   "ms": 2592000000,
+   "label": "1mo"
+  },
+  {
+   "ms": 31535999000,
+   "label": "1.0y"
+  },
+  {
+   "ms": 31536000000,
+   "label": "1.0y"
+  },
+  {
+   "ms": 47304000000,
+   "label": "1.5y"
+  },
+  {
+   "ms": 315360000000,
+   "label": "10y"
+  },
+  {
+   "ms": 400000000000,
+   "label": "13y"
+  }
+ ]
+}

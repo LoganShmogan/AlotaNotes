@@ -6,11 +6,12 @@
 //       Every row that changes gets the next value of the user's `syncSeq`.
 // pull: returns rows with seq > the client's cursor, oldest first, with
 //       tombstones, and the new cursor to store.
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { SYNC_LIMITS } from "./plans";
-import { findUser, getOrCreateUser, requireIdentity } from "./users";
+import { checkNoteSize, RowWriter, syncError } from "./rows";
+import { findUser, requireIdentity } from "./users";
 import {
   appendOnlyTables,
   pushRow,
@@ -39,10 +40,6 @@ type PushRow<T extends SyncedTable> = {
 
 const MAX_UID_LENGTH = 64;
 
-function syncError(code: string, message: string, extra: Record<string, string | number> = {}) {
-  return new ConvexError({ code, message, ...extra });
-}
-
 // Rejects the whole batch on the first bad row, so a push either lands
 // completely or not at all and the client can show one clear error.
 function validateRow(table: SyncedTable, row: PushRow<SyncedTable>) {
@@ -52,23 +49,14 @@ function validateRow(table: SyncedTable, row: PushRow<SyncedTable>) {
   if (row.deletedAt == null && row.data == null) {
     throw syncError("INVALID_ROW", `A ${table} row has no data and isn't deleted.`, { table, uid: row.uid });
   }
-  if (table === "notes" && row.data != null) {
-    const bytes = new TextEncoder().encode((row.data as SyncedData["notes"]).body).length;
-    if (bytes > SYNC_LIMITS.maxNoteBytes) {
-      throw syncError(
-        "NOTE_TOO_LARGE",
-        `A note is ${Math.ceil(bytes / 1024)} KB; the limit is ${SYNC_LIMITS.maxNoteBytes / 1024} KB.`,
-        { table, uid: row.uid },
-      );
-    }
-  }
+  if (table === "notes" && row.data != null) checkNoteSize((row.data as SyncedData["notes"]).body, row.uid);
 }
 
 export const push = mutation({
   args: { changes: changesValidator },
   returns: v.object({ applied: v.number(), skipped: v.number() }),
   handler: async (ctx, { changes }) => {
-    const identity = await requireIdentity(ctx);
+    await requireIdentity(ctx);
     const total = syncedTableNames.reduce((sum, table) => sum + (changes[table]?.length ?? 0), 0);
     if (total > SYNC_LIMITS.maxRowsPerPush) {
       throw syncError("BATCH_TOO_LARGE", `Push at most ${SYNC_LIMITS.maxRowsPerPush} rows at a time.`);
@@ -77,10 +65,7 @@ export const push = mutation({
       for (const row of changes[table] ?? []) validateRow(table, row);
     }
 
-    const user = await getOrCreateUser(ctx, identity.subject);
-    const now = Date.now();
-    let seq = user.syncSeq;
-    const rowCounts = { ...user.rowCounts };
+    const writer = await RowWriter.forCaller(ctx);
     let applied = 0;
     let skipped = 0;
 
@@ -88,12 +73,9 @@ export const push = mutation({
       for (const row of (changes[table] ?? []) as PushRow<SyncedTable>[]) {
         // A device clock running ahead would otherwise win every conflict
         // until the real time caught up.
-        const updatedAt = Math.min(row.updatedAt, now);
+        const updatedAt = Math.min(row.updatedAt, writer.now);
         const deleting = row.deletedAt != null;
-        const existing = await ctx.db
-          .query(table)
-          .withIndex("by_user_uid", (q) => q.eq("userId", user._id).eq("uid", row.uid))
-          .unique();
+        const existing = await writer.get(table, row.uid);
 
         if (existing !== null) {
           const stale = updatedAt <= existing.updatedAt;
@@ -105,36 +87,16 @@ export const push = mutation({
           }
         }
 
-        const wasLive = existing !== null && existing.deletedAt === undefined;
-        const liveDelta = (deleting ? 0 : 1) - (wasLive ? 1 : 0);
-        const count = (rowCounts[table] ?? 0) + liveDelta;
-        if (liveDelta > 0 && count > SYNC_LIMITS.maxRowsPerTable) {
-          throw syncError(
-            "ROW_LIMIT",
-            `You've reached the limit of ${SYNC_LIMITS.maxRowsPerTable.toLocaleString("en-US")} ${table}.`,
-            { table },
-          );
-        }
-        rowCounts[table] = count;
-
-        seq++;
-        const fields = {
+        await writer.put(table, row.uid, deleting ? undefined : row.data!, {
+          existing,
           updatedAt,
-          seq,
-          deletedAt: deleting ? Math.min(row.deletedAt!, now) : undefined,
-          // A tombstone keeps no content.
-          data: deleting ? undefined : row.data!,
-        };
-        if (existing === null) {
-          await ctx.db.insert(table, { userId: user._id, uid: row.uid, ...fields } as never);
-        } else {
-          await ctx.db.patch(existing._id, fields as never);
-        }
+          deletedAt: deleting ? Math.min(row.deletedAt!, writer.now) : undefined,
+        });
         applied++;
       }
     }
 
-    if (applied > 0) await ctx.db.patch(user._id, { syncSeq: seq, rowCounts });
+    await writer.flush();
     return { applied, skipped };
   },
 });

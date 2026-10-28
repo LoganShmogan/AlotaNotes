@@ -1,0 +1,56 @@
+/* QuillFin's placeholder brand (Docs/quillfin_plan.md §4). One of the two
+   token files (with lib/theme/brand.dart in the app): swapping in the real
+   brand is an edit here. Dark mode follows the system unless the viewer
+   picks Light or Dark in Settings, which sets data-theme on <html>. */
+:root {
+  --ink: #12212e;
+  --ink-soft: #4c5c69;
+  --paper: #f7f6f2;
+  --surface: #ffffff;
+  --surface-tint: #eef3f2;
+  --fin: #0f8a7e;
+  --on-fin: #ffffff;
+  --deep: #0e3b4f;
+  --on-deep: #f7f6f2;
+  --quill: #f2b33d;
+  --danger: #c2412d;
+  --success: #2f9e5c;
+  --line: #dde3e1;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e8eef2;
+    --ink-soft: #a9b6c0;
+    --paper: #0d1821;
+    --surface: #15232f;
+    --surface-tint: #1c2e3b;
+    --fin: #3cc3b3;
+    --on-fin: #0d1821;
+    --deep: #9ed8e6;
+    --on-deep: #0d1821;
+    --quill: #f5c561;
+    --danger: #ff8a73;
+    --success: #6dd69a;
+    --line: #26394a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ink: #e8eef2;
+  --ink-soft: #a9b6c0;
+  --paper: #0d1821;
+  --surface: #15232f;
+  --surface-tint: #1c2e3b;
+  --fin: #3cc3b3;
+  --on-fin: #0d1821;
+  --deep: #9ed8e6;
+  --on-deep: #0d1821;
+  --quill: #f5c561;
+  --danger: #ff8a73;
+  --success: #6dd69a;
+  --line: #26394a;
+  color-scheme: dark;
+}
