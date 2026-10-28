@@ -1,4 +1,6 @@
-# Quiz App AI (Flutter)
+# QuillFin
+
+*by Save Point*
 
 A mobile-first notes app built around spaced repetition. Keep notes in subject
 folders, turn them into quiz questions with your own AI account, track practice
@@ -31,8 +33,14 @@ where useful, its algorithms ported to Dart), not its code. See
   recall and a 7-day forecast, plus an optional daily study notification
   (scheduled by the OS on Android/iOS/macOS, shown while open on
   Linux/Windows).
-- **SavePoint look.** Colours, Chakra Petch and Figtree fonts, borders and
-  pixel shadows from savepoint.co.nz. See `Docs/gui_theming.md`.
+- **Works at every size.** Phone-first with a bottom bar; a rail on tablets
+  and landscape phones; a sidebar, list-detail panes, a table view and
+  keyboard shortcuts on desktop. Light and dark themes. See
+  `Docs/quillfin_plan.md` section 5.
+
+QuillFin is moving to accounts (Clerk), sync (Convex) and a Pro plan
+(Stripe), with a Next.js web app alongside this Flutter app. The plan,
+including per-screen-size layouts, is in `Docs/quillfin_plan.md`.
 
 ## Quick start
 
@@ -84,7 +92,9 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
 - `scheduling_algorithm.md`, FSRS scheduling, ratings and the v1 migration
 - `ai_providers.md`, the AI provider abstraction (OpenAI/Anthropic), how to
   add a third
-- `gui_theming.md`, the SavePoint visual design system
+- `quillfin_plan.md`, the production plan: architecture, sync, pricing,
+  layouts per screen size, phases
+- `gui_theming.md`, the (placeholder) QuillFin brand tokens and theme
 - `testing.md`, how to run tests and check coverage, the test fakes and
   patterns, what's not covered, and the ADB-tap
   cautionary tale behind why widget tests are the trustworthy path here

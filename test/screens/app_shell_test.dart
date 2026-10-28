@@ -5,20 +5,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/app.dart';
-import 'package:quizapp/auth/auth_service.dart';
-import 'package:quizapp/main.dart' as app;
-import 'package:quizapp/screens/account/account_screen.dart';
-import 'package:quizapp/screens/login/login_screen.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/screens/notes/notes_home_screen.dart';
-import 'package:quizapp/screens/root_shell.dart';
-import 'package:quizapp/screens/settings/settings_screen.dart';
-import 'package:quizapp/screens/today/today_screen.dart';
-import 'package:quizapp/screens/tracker/problems_screen.dart';
-import 'package:quizapp/services/reminder_service.dart';
-import 'package:quizapp/settings/app_settings.dart';
-import 'package:quizapp/theme/theme.dart';
+import 'package:quillfin/app.dart';
+import 'package:quillfin/auth/auth_service.dart';
+import 'package:quillfin/main.dart' as app;
+import 'package:quillfin/screens/account/account_screen.dart';
+import 'package:quillfin/screens/login/login_screen.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/screens/notes/notes_home_screen.dart';
+import 'package:quillfin/screens/root_shell.dart';
+import 'package:quillfin/screens/settings/settings_screen.dart';
+import 'package:quillfin/screens/today/today_screen.dart';
+import 'package:quillfin/screens/tracker/problems_screen.dart';
+import 'package:quillfin/services/reminder_service.dart';
+import 'package:quillfin/settings/app_settings.dart';
+import 'package:quillfin/theme/theme.dart';
 
 import '../helpers/fake_notifications.dart';
 import '../helpers/test_env.dart';
@@ -45,20 +45,20 @@ void main() {
       });
     });
 
-    testWidgets('QuizApp shows a spinner, then the login screen when signed out', (tester) async {
+    testWidgets('QuillFinApp shows a spinner, then the login screen when signed out', (tester) async {
       await tester.runAsync(() async {
-        await tester.pumpWidget(QuizApp(authService: HardcodedAuthService()));
+        await tester.pumpWidget(QuillFinApp(authService: HardcodedAuthService()));
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
         await waitForLoad(tester);
         expect(find.byType(LoginScreen), findsOneWidget);
-        expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.scaffoldBackgroundColor, colorPaper);
+        expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.scaffoldBackgroundColor, BrandPalette.light.paper);
       });
     });
 
-    testWidgets('QuizApp goes straight to the app shell when already signed in', (tester) async {
+    testWidgets('QuillFinApp goes straight to the app shell when already signed in', (tester) async {
       await tester.runAsync(() async {
-        await tester.pumpWidget(QuizApp(authService: await signedIn()));
+        await tester.pumpWidget(QuillFinApp(authService: await signedIn()));
         await waitForLoad(tester);
 
         expect(find.byType(RootShell), findsOneWidget);
@@ -115,7 +115,8 @@ void main() {
   });
 
   group('RootShell', () {
-    Finder tab(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+    // The default 800x600 test window is "medium", so sections are in a rail.
+    Finder tab(String label) => find.descendant(of: find.byType(NavigationRail), matching: find.text(label));
 
     testWidgets('opens the app database, then switches between the five tabs', (tester) async {
       await tester.runAsync(() async {
@@ -135,7 +136,7 @@ void main() {
           await waitForLoad(tester);
           expect(find.byType(screen), findsOneWidget, reason: label);
         }
-        expect(documentsDir.listSync().map((f) => f.path.split('/').last), contains('quizapp.db'));
+        expect(documentsDir.listSync().map((f) => f.path.split('/').last), contains('quillfin.db'));
       });
     }, variant: linux);
 

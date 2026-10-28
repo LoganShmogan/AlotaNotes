@@ -10,6 +10,7 @@ import '../../core/scheduling.dart';
 import '../../settings/app_settings.dart';
 import '../../storage/db.dart';
 import '../../storage/problems_repo.dart';
+import '../../layout/breakpoints.dart';
 import '../../theme/theme.dart';
 import '../../theme/widgets.dart';
 import 'log_attempt_sheet.dart';
@@ -21,7 +22,16 @@ import 'problem_editor_screen.dart';
 class ProblemDetailScreen extends StatefulWidget {
   final Database db;
   final int problemId;
-  const ProblemDetailScreen({super.key, required this.db, required this.problemId});
+
+  /// Called after an attempt is logged or the problem is edited.
+  final VoidCallback? onChanged;
+
+  /// When set, the screen is embedded as the detail pane of the tracker's
+  /// list-detail layout: deleting calls this instead of popping, and there's
+  /// no back button.
+  final VoidCallback? onDeleted;
+
+  const ProblemDetailScreen({super.key, required this.db, required this.problemId, this.onChanged, this.onDeleted});
 
   @override
   State<ProblemDetailScreen> createState() => _ProblemDetailScreenState();
@@ -70,16 +80,22 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
     final problem = _problem!;
     final now = utcNow();
     final started = _timerStartedAt;
-    final input = await showModalBottomSheet<AttemptInput>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => LogAttemptSheet(
-        card: problem.card,
-        scheduler: _scheduler,
-        now: now,
-        initialMinutes: started == null ? null : DateTime.now().difference(started).inMinutes,
-      ),
+    final sheet = LogAttemptSheet(
+      card: problem.card,
+      scheduler: _scheduler,
+      now: now,
+      initialMinutes: started == null ? null : DateTime.now().difference(started).inMinutes,
     );
+    // A bottom sheet on phones; a dialog where a sheet would stretch across
+    // a wide window or cover a short (landscape) one.
+    final input = context.windowSize == WindowSize.compact && !context.isShortHeight
+        ? await showModalBottomSheet<AttemptInput>(context: context, isScrollControlled: true, builder: (_) => sheet)
+        : await showDialog<AttemptInput>(
+            context: context,
+            builder: (_) => Dialog(
+              child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480), child: sheet),
+            ),
+          );
     if (input == null) return;
     final after = reviewCard(problem.card ?? newCard(now), input.rating, now, scheduler: _scheduler);
     await _repo.recordAttempt(
@@ -95,6 +111,7 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
     _ticker = null;
     _timerStartedAt = null;
     await _refresh();
+    widget.onChanged?.call();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Logged. Next re-solve in ${formatInterval(after.due.difference(now))}.')),
@@ -106,6 +123,7 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
       MaterialPageRoute(builder: (_) => ProblemEditorScreen(db: widget.db, problemId: widget.problemId)),
     );
     await _refresh();
+    widget.onChanged?.call();
   }
 
   Future<void> _delete() async {
@@ -122,6 +140,10 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
     );
     if (confirmed != true) return;
     await _repo.delete(widget.problemId);
+    if (widget.onDeleted != null) {
+      widget.onDeleted!();
+      return;
+    }
     if (!mounted) return;
     Navigator.of(context).pop();
   }
@@ -146,6 +168,7 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Problem'),
+        automaticallyImplyLeading: widget.onDeleted == null,
         actions: [
           IconButton(icon: const Icon(Icons.edit_outlined), tooltip: 'Edit', onPressed: problem == null ? null : _edit),
           IconButton(icon: const Icon(Icons.delete_outline), tooltip: 'Delete', onPressed: problem == null ? null : _delete),
@@ -157,93 +180,101 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
 
   Widget _buildBody(Problem problem) {
     final theme = Theme.of(context);
+    final b = context.brand;
     final now = utcNow();
     final card = problem.card;
     final started = _timerStartedAt;
     final elapsed = started == null ? null : DateTime.now().difference(started);
+    final gutter = context.windowSize.gutter;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 32),
       children: [
-        PixelCard(
+        ContentWidth(
+          maxWidth: 760,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(problem.title, style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
+              BrandCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(problem.title, style: theme.textTheme.headlineSmall),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        DifficultyPill(problem.difficulty),
+                        StatusPill(problem.status),
+                        if (problem.platform.isNotEmpty) Pill(problem.platform),
+                        for (final tag in problem.tags) Pill('#$tag'),
+                      ],
+                    ),
+                    if (problem.url != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                        onPressed: () => _openLink(problem.url!),
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: Text(problem.url!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              BrandCard(
+                color: b.deep,
+                child: card == null
+                    ? Text(
+                        'Not attempted yet. Log your first attempt to start its review schedule.',
+                        style: theme.textTheme.bodyLarge!.copyWith(color: b.onDeep),
+                      )
+                    : Row(
+                        children: [
+                          _memoryStat(
+                            'Next re-solve',
+                            isDue(card.due, now) ? 'Due now' : 'in ${formatInterval(card.due.difference(now))}',
+                          ),
+                          _memoryStat('Recall now', '${(retrievability(card, now, scheduler: _scheduler) * 100).round()}%'),
+                          _memoryStat('Memory', card.stability == null ? '–' : formatInterval(_stabilityDuration(card))),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 16),
+              Row(
                 children: [
-                  DifficultyPill(problem.difficulty),
-                  StatusPill(problem.status),
-                  if (problem.platform.isNotEmpty) Pill(problem.platform, color: colorPaperRaised),
-                  for (final tag in problem.tags) Pill('#$tag', color: colorPaperRaised),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _toggleTimer,
+                      icon: Icon(started == null ? Icons.timer_outlined : Icons.stop),
+                      label: Text(started == null ? 'Timer' : _formatElapsed(elapsed!)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: PrimaryButton(label: 'Log attempt', icon: Icons.add_task, onPressed: _logAttempt)),
                 ],
               ),
-              if (problem.url != null) ...[
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                  onPressed: () => _openLink(problem.url!),
-                  icon: const Icon(Icons.open_in_new, size: 18),
-                  label: Text(problem.url!, maxLines: 1, overflow: TextOverflow.ellipsis),
+              if (problem.solution.isNotEmpty) ...[
+                const SectionLabel('Solution'),
+                BrandCard(
+                  color: b.surfaceTint,
+                  child: SelectableText(
+                    problem.solution,
+                    style: TextStyle(fontFamily: 'monospace', fontSize: 13.5, color: b.ink, height: 1.45),
+                  ),
                 ),
               ],
+              if (problem.notes.isNotEmpty) ...[
+                const SectionLabel('Notes'),
+                BrandCard(child: Text(problem.notes)),
+              ],
+              SectionLabel('Attempts (${_attempts.length})'),
+              if (_attempts.isEmpty) Text('None yet.', style: theme.textTheme.bodySmall),
+              for (final attempt in _attempts) _attemptTile(attempt),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        PixelCard(
-          color: colorPlum,
-          shadowColor: colorPurple,
-          child: card == null
-              ? Text(
-                  'Not attempted yet. Log your first attempt to start its review schedule.',
-                  style: theme.textTheme.bodyLarge!.copyWith(color: colorOnPlum),
-                )
-              : Row(
-                  children: [
-                    _memoryStat(
-                      'Next re-solve',
-                      isDue(card.due, now) ? 'Due now' : 'in ${formatInterval(card.due.difference(now))}',
-                    ),
-                    _memoryStat('Recall now', '${(retrievability(card, now, scheduler: _scheduler) * 100).round()}%'),
-                    _memoryStat('Memory', card.stability == null ? '–' : formatInterval(_stabilityDuration(card))),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _toggleTimer,
-                icon: Icon(started == null ? Icons.timer_outlined : Icons.stop),
-                label: Text(started == null ? 'Timer' : _formatElapsed(elapsed!)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: PixelButton(label: 'Log attempt', onPressed: _logAttempt)),
-          ],
-        ),
-        if (problem.solution.isNotEmpty) ...[
-          const SectionLabel('Solution'),
-          PixelCard(
-            color: colorPaperTint,
-            shadowColor: colorInk,
-            child: SelectableText(
-              problem.solution,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 13.5, color: colorInk, height: 1.45),
-            ),
-          ),
-        ],
-        if (problem.notes.isNotEmpty) ...[
-          const SectionLabel('Notes'),
-          PixelCard(child: Text(problem.notes)),
-        ],
-        SectionLabel('Attempts (${_attempts.length})'),
-        if (_attempts.isEmpty) Text('None yet.', style: theme.textTheme.bodySmall),
-        for (final attempt in _attempts) _attemptTile(attempt),
       ],
     );
   }
@@ -256,8 +287,8 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: const TextStyle(fontFamily: fontDisplay, fontSize: 20, fontWeight: FontWeight.w700, color: colorYellow)),
-          Text(label, style: const TextStyle(fontSize: 13, color: colorOnPlumSoft)),
+          Text(value, style: TextStyle(fontFamily: fontDisplay, fontSize: 20, fontWeight: FontWeight.w700, color: context.brand.quill)),
+          Text(label, style: TextStyle(fontSize: 13, color: context.brand.onDeepSoft)),
         ],
       ),
     );
@@ -274,7 +305,7 @@ class _ProblemDetailScreenState extends State<ProblemDetailScreen> {
     return Card(
       child: ListTile(
         leading: Icon(attempt.solved ? Icons.check_circle : Icons.cancel_outlined,
-            color: attempt.solved ? colorPurpleDeep : colorDanger),
+            color: attempt.solved ? context.brand.success : context.brand.danger),
         title: Text(attempt.solved ? 'Solved' : 'Not solved'),
         subtitle: Text(attempt.notes.isEmpty ? details : '$details\n${attempt.notes}'),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
 
 void main() {
   final t0 = DateTime.utc(2026, 1, 1);

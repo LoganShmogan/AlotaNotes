@@ -1,87 +1,151 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/theme/theme.dart';
-import 'package:quizapp/theme/widgets.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/theme/theme.dart';
+import 'package:quillfin/theme/widgets.dart';
 
 void main() {
-  Future<void> pump(WidgetTester tester, Widget child) =>
-      tester.pumpWidget(MaterialApp(theme: buildAppTheme(), home: Scaffold(body: Center(child: child))));
+  Future<void> pump(WidgetTester tester, Widget child, {Brightness brightness = Brightness.light}) => tester.pumpWidget(
+        MaterialApp(theme: buildAppTheme(brightness: brightness), home: Scaffold(body: Center(child: child))),
+      );
 
-  group('PixelButton', () {
-    double? shadowOffset(WidgetTester tester) {
-      final decoration = tester.widget<AnimatedContainer>(find.byType(AnimatedContainer)).decoration as BoxDecoration;
-      return decoration.boxShadow?.single.offset.dx;
-    }
+  group('theme', () {
+    test('light and dark themes carry their own palette', () {
+      expect(buildAppTheme().extension<BrandColors>()!.palette, same(BrandPalette.light));
+      final dark = buildAppTheme(brightness: Brightness.dark);
+      expect(dark.extension<BrandColors>()!.palette, same(BrandPalette.dark));
+      expect(dark.colorScheme.primary, BrandPalette.dark.fin);
+      expect(dark.scaffoldBackgroundColor, BrandPalette.dark.paper);
+    });
 
-    testWidgets('presses in while held and springs back on release or cancel', (tester) async {
+    test('BrandColors swaps palettes halfway through a theme animation', () {
+      const light = BrandColors(BrandPalette.light);
+      const dark = BrandColors(BrandPalette.dark);
+      expect(light.lerp(dark, 0.4), same(light));
+      expect(light.lerp(dark, 0.6), same(dark));
+      expect(light.lerp(null, 0.9), same(light));
+      expect(light.copyWith(palette: BrandPalette.dark).palette, same(BrandPalette.dark));
+      expect(light.copyWith().palette, same(BrandPalette.light));
+    });
+
+    testWidgets('context.brand follows the theme, falling back by brightness', (tester) async {
+      late BrandPalette seen;
+      Widget probe() => Builder(builder: (context) {
+            seen = context.brand;
+            return const SizedBox();
+          });
+      await tester.pumpWidget(MaterialApp(theme: buildAppTheme(brightness: Brightness.dark), home: probe()));
+      expect(seen.paper, BrandPalette.dark.paper);
+      await tester.pumpWidget(MaterialApp(theme: ThemeData(brightness: Brightness.dark), home: probe()));
+      await tester.pumpAndSettle();
+      expect(seen.paper, BrandPalette.dark.paper);
+      await tester.pumpWidget(MaterialApp(home: probe()));
+      await tester.pumpAndSettle(); // MaterialApp animates between themes
+      expect(seen.paper, BrandPalette.light.paper);
+    });
+
+    testWidgets('switch and checkbox colours follow selection', (tester) async {
+      final theme = buildAppTheme();
+      final selected = {WidgetState.selected};
+      expect(theme.switchTheme.thumbColor!.resolve(selected), BrandPalette.light.onFin);
+      expect(theme.switchTheme.thumbColor!.resolve({}), BrandPalette.light.inkSoft);
+      expect(theme.switchTheme.trackColor!.resolve(selected), BrandPalette.light.fin);
+      expect(theme.switchTheme.trackColor!.resolve({}), BrandPalette.light.surfaceTint);
+      expect(theme.switchTheme.trackOutlineColor!.resolve(selected), BrandPalette.light.fin);
+      expect(theme.switchTheme.trackOutlineColor!.resolve({}), BrandPalette.light.line);
+      expect(theme.checkboxTheme.fillColor!.resolve(selected), BrandPalette.light.fin);
+      expect(theme.checkboxTheme.fillColor!.resolve({}), isNull);
+      expect(theme.navigationBarTheme.iconTheme!.resolve(selected)!.color, BrandPalette.light.fin);
+      expect(theme.navigationBarTheme.labelTextStyle!.resolve({})!.color, BrandPalette.light.inkSoft);
+    });
+  });
+
+  group('PrimaryButton', () {
+    testWidgets('plain, with an icon, and highlighted', (tester) async {
       var taps = 0;
-      await pump(tester, PixelButton(label: 'Go', icon: Icons.play_arrow, onPressed: () => taps++));
+      await pump(tester, PrimaryButton(label: 'Go', onPressed: () => taps++));
+      await tester.tap(find.text('Go'));
+      expect(taps, 1);
+
+      await pump(tester, PrimaryButton(label: 'Start', icon: Icons.play_arrow, highlight: true, onPressed: () {}));
       expect(find.byIcon(Icons.play_arrow), findsOneWidget);
-      expect(shadowOffset(tester), 4);
-
-      final gesture = await tester.startGesture(tester.getCenter(find.text('Go')));
-      await tester.pump();
-      expect(shadowOffset(tester), 2);
-      await gesture.up();
-      await tester.pump();
-      expect((shadowOffset(tester), taps), (4, 1));
-
-      final cancelled = await tester.startGesture(tester.getCenter(find.text('Go')));
-      await tester.pump();
-      await cancelled.cancel();
-      await tester.pump();
-      expect((shadowOffset(tester), taps), (4, 1));
-    });
-
-    testWidgets('disabled: no shadow', (tester) async {
-      await pump(tester, const PixelButton(label: 'Nope', onPressed: null));
-      expect(shadowOffset(tester), isNull);
+      final button = tester.widget<ButtonStyleButton>(find.byWidgetPredicate((w) => w is ButtonStyleButton));
+      expect(button.style!.backgroundColor!.resolve({}), BrandPalette.light.quill);
     });
   });
 
-  testWidgets('PixelCard is tappable when given onTap', (tester) async {
-    var taps = 0;
-    await pump(tester, PixelCard(onTap: () => taps++, child: const Text('card')));
-    await tester.tap(find.text('card'));
-    expect(taps, 1);
+  group('BrandCard', () {
+    testWidgets('is tappable when given onTap, and can carry an accent bar', (tester) async {
+      var taps = 0;
+      await pump(tester, BrandCard(onTap: () => taps++, accent: Colors.amber, child: const Text('card')));
+      await tester.tap(find.text('card'));
+      expect(taps, 1);
+      expect(find.byWidgetPredicate((w) => w is Container && w.color == Colors.amber), findsOneWidget);
+    });
+
+    testWidgets('a coloured card has no border', (tester) async {
+      await pump(tester, const BrandCard(color: Colors.teal, child: Text('x')));
+      final material = tester.widget<Material>(find.descendant(of: find.byType(BrandCard), matching: find.byType(Material)));
+      expect((material.shape! as RoundedRectangleBorder).side.color, Colors.transparent);
+    });
   });
 
-  testWidgets('pills label difficulty and status', (tester) async {
-    await pump(
-      tester,
-      const Column(children: [
-        DifficultyPill(problemDifficultyEasy),
-        DifficultyPill(problemDifficultyMedium),
-        DifficultyPill(problemDifficultyHard),
-        StatusPill(ProblemStatus.todo),
-        StatusPill(ProblemStatus.attempted),
-        StatusPill(ProblemStatus.solved),
-      ]),
-    );
-    for (final label in ['Easy', 'Medium', 'Hard', 'To do', 'Attempted', 'Solved']) {
-      expect(find.text(label), findsOneWidget, reason: label);
+  testWidgets('pills label difficulty and status, in both themes', (tester) async {
+    for (final brightness in Brightness.values) {
+      await pump(
+        tester,
+        const Column(children: [
+          DifficultyPill(problemDifficultyEasy),
+          DifficultyPill(problemDifficultyMedium),
+          DifficultyPill(problemDifficultyHard),
+          StatusPill(ProblemStatus.todo),
+          StatusPill(ProblemStatus.attempted),
+          StatusPill(ProblemStatus.solved),
+        ]),
+        brightness: brightness,
+      );
+      for (final label in ['Easy', 'Medium', 'Hard', 'To do', 'Attempted', 'Solved']) {
+        expect(find.text(label), findsOneWidget, reason: '$label ($brightness)');
+      }
     }
   });
 
   testWidgets('RetentionMeter shows a percentage, coloured by how safe it is', (tester) async {
-    Color fill(double value) {
+    Color fill() {
       final bar = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox)).child! as Container;
       return bar.color!;
     }
 
     await pump(tester, const RetentionMeter(0.92));
     expect(find.text('92%'), findsOneWidget);
-    expect(fill(0.92), colorGreen);
+    expect(fill(), BrandPalette.light.success);
     await pump(tester, const RetentionMeter(0.75));
-    expect(fill(0.75), colorYellow);
+    expect(fill(), BrandPalette.light.quill);
     await pump(tester, const RetentionMeter(0.4));
-    expect(fill(0.4), colorPurple);
+    expect(fill(), BrandPalette.light.danger);
   });
 
-  testWidgets('EmptyState shows its action', (tester) async {
-    await pump(tester, EmptyState(icon: Icons.inbox, message: 'Nothing', action: TextButton(onPressed: () {}, child: const Text('Add'))));
-    expect(find.text('Nothing'), findsOneWidget);
-    expect(find.text('Add'), findsOneWidget);
+  testWidgets('EmptyState, SectionLabel and StatTile render their content', (tester) async {
+    await pump(
+      tester,
+      Column(children: [
+        EmptyState(icon: Icons.inbox, message: 'Nothing', action: TextButton(onPressed: () {}, child: const Text('Add'))),
+        const SectionLabel('Section', trailing: Text('more')),
+        const SizedBox(width: 200, child: StatTile(label: 'Due', value: '3', icon: Icons.quiz)),
+      ]),
+    );
+    for (final text in ['Nothing', 'Add', 'Section', 'more', 'Due', '3']) {
+      expect(find.text(text), findsOneWidget, reason: text);
+    }
+  });
+
+  testWidgets('the QuillFin mark and lockup', (tester) async {
+    await pump(tester, const Column(children: [QuillFinMark(size: 48), BrandLockup(showOwner: true)]));
+    expect(find.text(brandName), findsOneWidget);
+    expect(find.text('by $brandOwner'), findsOneWidget);
+    final painter = tester.widget<CustomPaint>(find.descendant(of: find.byType(QuillFinMark).first, matching: find.byType(CustomPaint))).painter! as MarkPainter;
+    expect(painter.color, BrandPalette.light.fin);
+    expect(painter.shouldRepaint(MarkPainter(BrandPalette.light.fin)), isFalse);
+    expect(painter.shouldRepaint(MarkPainter(Colors.red)), isTrue);
   });
 }

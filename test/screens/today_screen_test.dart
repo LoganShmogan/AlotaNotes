@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/screens/quiz/quiz_screen.dart';
-import 'package:quizapp/screens/today/today_screen.dart';
-import 'package:quizapp/screens/tracker/problem_detail_screen.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
-import 'package:quizapp/storage/problems_repo.dart';
-import 'package:quizapp/storage/questions_repo.dart';
-import 'package:quizapp/storage/reviews_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/screens/quiz/quiz_screen.dart';
+import 'package:quillfin/screens/today/today_screen.dart';
+import 'package:quillfin/screens/tracker/problem_detail_screen.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
+import 'package:quillfin/storage/problems_repo.dart';
+import 'package:quillfin/storage/questions_repo.dart';
+import 'package:quillfin/storage/reviews_repo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/test_env.dart';

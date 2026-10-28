@@ -7,6 +7,7 @@ import '../../storage/db.dart';
 import '../../storage/problems_repo.dart';
 import '../../storage/questions_repo.dart';
 import '../../storage/reviews_repo.dart';
+import '../../layout/breakpoints.dart';
 import '../../theme/theme.dart';
 import '../../theme/widgets.dart';
 import '../quiz/quiz_screen.dart';
@@ -104,76 +105,145 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   Widget _buildBody(_TodayData data) {
-    final theme = Theme.of(context);
-    final totalDue = data.questionsDue + data.problemsDue.length;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        PixelCard(
-          color: colorPlum,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final size = context.windowSize;
+    final gutter = size.gutter;
+    final stats = [
+      StatTile(label: 'Questions due', value: '${data.questionsDue}', icon: Icons.quiz_outlined),
+      StatTile(
+        label: 'Problems due',
+        value: '${data.problemsDue.length}',
+        icon: Icons.code,
+        accent: context.brand.info,
+      ),
+      StatTile(
+        label: 'Reviewed today',
+        value: '${data.reviewedToday}',
+        icon: Icons.check_circle_outline,
+        accent: context.brand.success,
+      ),
+      StatTile(
+        label: 'Average recall',
+        value: data.averageRecall == null ? '–' : '${(data.averageRecall! * 100).round()}%',
+        icon: Icons.psychology_outlined,
+        accent: context.brand.quill,
+      ),
+    ];
+    // Compact: 2x2 grid. Medium and up: one row of four.
+    final statGrid = size == WindowSize.compact
+        ? Column(
             children: [
-              Text(
-                totalDue == 0 ? 'All caught up' : '$totalDue ready to review',
-                style: theme.textTheme.headlineSmall!.copyWith(color: colorOnPlum),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                totalDue == 0
-                    ? 'Nothing is due right now. Add notes or log a problem to grow your review queue.'
-                    : 'Reviewing right before you forget is what makes it stick.',
-                style: theme.textTheme.bodyMedium!.copyWith(color: colorOnPlumSoft),
-              ),
-              if (data.questionsDue > 0) ...[
-                const SizedBox(height: 16),
-                PixelButton(
-                  label: 'Start quiz (${data.questionsDue})',
-                  icon: Icons.play_arrow,
-                  onPressed: () => _push(QuizScreen(db: widget.db)),
-                ),
-              ],
+              _row([stats[0], stats[1]]),
+              const SizedBox(height: 10),
+              _row([stats[2], stats[3]]),
             ],
-          ),
+          )
+        : _row(stats);
+    final problems = _problemsSection(data);
+    final mainColumn = [
+      _hero(data),
+      const SizedBox(height: 14),
+      statGrid,
+      if (!context.showsTwoPanes) ...problems,
+      const SectionLabel('Coming up'),
+      _Forecast(counts: data.forecast),
+    ];
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 32),
+      children: [
+        ContentWidth(
+          maxWidth: size >= WindowSize.extraLarge ? maxContentWidthXL : maxContentWidth,
+          child: context.showsTwoPanes
+              // Expanded and up: main column left (60%), problems right.
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: mainColumn)),
+                    SizedBox(width: gutter),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: problems.isEmpty
+                            ? [
+                                const SectionLabel('Problems to re-solve'),
+                                Text('None due. Nice.', style: Theme.of(context).textTheme.bodySmall),
+                              ]
+                            : problems,
+                      ),
+                    ),
+                  ],
+                )
+              : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: mainColumn),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: StatTile(label: 'Questions due', value: '${data.questionsDue}', accent: colorYellow)),
-            const SizedBox(width: 6),
-            Expanded(child: StatTile(label: 'Problems due', value: '${data.problemsDue.length}', accent: colorBlue)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(child: StatTile(label: 'Reviewed today', value: '${data.reviewedToday}', accent: colorGreen)),
-            const SizedBox(width: 6),
-            Expanded(
-              child: StatTile(
-                label: 'Average recall',
-                value: data.averageRecall == null ? '–' : '${(data.averageRecall! * 100).round()}%',
-              ),
-            ),
-          ],
-        ),
-        if (data.problemsDue.isNotEmpty) ...[
-          const SectionLabel('Problems to re-solve'),
-          for (final problem in data.problemsDue)
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.code),
-                title: Text(problem.title),
-                subtitle: Text(problem.tags.isEmpty ? problem.platform : problem.tags.map((t) => '#$t').join(' ')),
-                trailing: DifficultyPill(problem.difficulty),
-                onTap: () => _push(ProblemDetailScreen(db: widget.db, problemId: problem.id)),
-              ),
-            ),
-        ],
-        const SectionLabel('Coming up'),
-        _Forecast(counts: data.forecast),
       ],
     );
+  }
+
+  Widget _row(List<Widget> tiles) => Row(
+        children: [
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(child: tiles[i]),
+          ],
+        ],
+      );
+
+  Widget _hero(_TodayData data) {
+    final theme = Theme.of(context);
+    final b = context.brand;
+    final totalDue = data.questionsDue + data.problemsDue.length;
+    return BrandCard(
+      color: b.deep,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            totalDue == 0 ? 'All caught up' : '$totalDue ready to review',
+            style: theme.textTheme.headlineSmall!.copyWith(color: b.onDeep),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            totalDue == 0
+                ? 'Nothing is due right now. Add notes or log a problem to grow your review queue.'
+                : 'Reviewing right before you forget is what makes it stick.',
+            style: theme.textTheme.bodyMedium!.copyWith(color: b.onDeepSoft),
+          ),
+          if (data.questionsDue > 0) ...[
+            const SizedBox(height: 16),
+            PrimaryButton(
+              label: 'Start quiz (${data.questionsDue})',
+              icon: Icons.play_arrow_rounded,
+              highlight: true,
+              onPressed: () => _push(QuizScreen(db: widget.db)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _problemsSection(_TodayData data) {
+    if (data.problemsDue.isEmpty) return const [];
+    return [
+      const SectionLabel('Problems to re-solve'),
+      for (final problem in data.problemsDue)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: BrandCard(
+            accent: context.brand.quill,
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: const Icon(Icons.code),
+              title: Text(problem.title),
+              subtitle: Text(problem.tags.isEmpty ? problem.platform : problem.tags.map((t) => '#$t').join(' ')),
+              trailing: DifficultyPill(problem.difficulty),
+              onTap: () => _push(ProblemDetailScreen(db: widget.db, problemId: problem.id)),
+            ),
+          ),
+        ),
+    ];
   }
 }
 
@@ -186,12 +256,13 @@ class _Forecast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxCount = counts.fold(0, (a, b) => a > b ? a : b);
+    final b = context.brand;
+    final maxCount = counts.fold(0, (a, c) => a > c ? a : c);
     final today = DateTime.now();
-    return PixelCard(
+    return BrandCard(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
       child: SizedBox(
-        height: 110,
+        height: 120,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -203,11 +274,11 @@ class _Forecast extends StatelessWidget {
                     Text('${counts[i]}', style: Theme.of(context).textTheme.labelLarge),
                     const SizedBox(height: 4),
                     Container(
-                      height: maxCount == 0 ? 0 : 56 * counts[i] / maxCount,
+                      height: maxCount == 0 ? 3 : 3 + 60 * counts[i] / maxCount,
                       margin: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: BoxDecoration(
-                        color: i == 0 ? colorYellow : colorPurple,
-                        border: counts[i] == 0 ? null : Border.all(color: colorInk, width: 2),
+                        color: counts[i] == 0 ? b.surfaceTint : (i == 0 ? b.quill : b.fin),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                     const SizedBox(height: 6),

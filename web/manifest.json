@@ -1,11 +1,11 @@
 {
-    "name": "AlotaNotes",
-    "short_name": "AlotaNotes",
+    "name": "QuillFin",
+    "short_name": "QuillFin",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "AlotaNotes: notes and spaced-repetition quizzes.",
+    "description": "QuillFin: notes, quizzes and a problem tracker that remember for you.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

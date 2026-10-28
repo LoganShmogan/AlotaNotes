@@ -56,7 +56,7 @@ provider account directly with your own key.
 
 ## Where data lives
 
-- `quizapp.db`: the SQLite database (folders, notes, questions, review
+- `quillfin.db`: the SQLite database (folders, notes, questions, review
   history), in the standard app-data folder via `path_provider`
   (`getApplicationDocumentsDirectory()`), so the exact path is
   OS-dependent. On web it lives in the browser's IndexedDB instead (see

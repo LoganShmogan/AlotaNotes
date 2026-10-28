@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/storage/problems_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/storage/problems_repo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/test_env.dart';

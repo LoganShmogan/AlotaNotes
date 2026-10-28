@@ -13,7 +13,7 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:quizapp/storage/db.dart';
+import 'package:quillfin/storage/db.dart';
 
 /// A fresh, isolated in-memory database with the app's schema applied.
 /// `singleInstance: false` stops sqflite handing every test the same

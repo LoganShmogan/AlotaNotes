@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/ai/base.dart';
-import 'package:quizapp/ai/prompts.dart';
-import 'package:quizapp/core/models.dart';
+import 'package:quillfin/ai/base.dart';
+import 'package:quillfin/ai/prompts.dart';
+import 'package:quillfin/core/models.dart';
 
 void main() {
   test('returns the shared system prompt and a user prompt with the note', () {

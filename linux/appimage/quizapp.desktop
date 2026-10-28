@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Quiz App AI
-Comment=Notes and spaced-repetition quiz app
-Exec=quizapp
-Icon=icon
-Categories=Education;
-Terminal=false

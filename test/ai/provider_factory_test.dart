@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/ai/anthropic_provider.dart';
-import 'package:quizapp/ai/openai_provider.dart';
-import 'package:quizapp/ai/provider_factory.dart';
+import 'package:quillfin/ai/anthropic_provider.dart';
+import 'package:quillfin/ai/openai_provider.dart';
+import 'package:quillfin/ai/provider_factory.dart';
 
 void main() {
   test('knownProviders lists every buildable provider', () {

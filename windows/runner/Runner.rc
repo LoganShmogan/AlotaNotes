@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "cc.savepoint" "\0"
-            VALUE "FileDescription", "quizapp" "\0"
+            VALUE "CompanyName", "Save Point" "\0"
+            VALUE "FileDescription", "QuillFin" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "quizapp" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 cc.savepoint. All rights reserved." "\0"
-            VALUE "OriginalFilename", "quizapp.exe" "\0"
-            VALUE "ProductName", "quizapp" "\0"
+            VALUE "InternalName", "quillfin" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Save Point Limited. All rights reserved." "\0"
+            VALUE "OriginalFilename", "quillfin.exe" "\0"
+            VALUE "ProductName", "QuillFin" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

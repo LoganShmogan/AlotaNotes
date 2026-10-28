@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/settings/app_settings.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/settings/app_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/test_env.dart';
@@ -32,11 +32,13 @@ void main() {
       remindersEnabled: true,
       reminderHour: 7,
       reminderMinute: 45,
+      themeMode: themeModeDark,
     ));
 
     final settings = await store.load();
     expect(settings.desiredRetention, 0.85);
     expect((settings.remindersEnabled, settings.reminderHour, settings.reminderMinute), (true, 7, 45));
+    expect(settings.themeMode, themeModeDark);
     expect(settings.provider, 'anthropic');
     expect(settings.model, 'claude-haiku-5-5');
     expect(settings.baseUrl, 'https://proxy.example.com');
@@ -62,6 +64,7 @@ void main() {
       'reminders_enabled': false,
       'reminder_hour': defaultReminderHour,
       'reminder_minute': 0,
+      'theme_mode': themeModeSystem,
     });
   });
 
@@ -71,6 +74,7 @@ void main() {
     expect((changed.provider, changed.model, changed.baseUrl, changed.reminderHour), ('anthropic', 'm', 'u', 8));
     expect((changed.remindersEnabled, changed.desiredRetention), (true, 0.8));
     expect(changed.copyWith().toJson(), changed.toJson());
+    expect(changed.copyWith(themeMode: themeModeDark).themeMode, themeModeDark);
 
     final cleared = base.copyWith(clearBaseUrl: true);
     expect(cleared.baseUrl, isNull);

@@ -33,7 +33,7 @@ What's real and what isn't:
   (bearer key, model, note text).
 - **Faked**: `path_provider` points at a temp dir, because on Linux the
   app's documents directory is `~/Documents` and the test must never touch
-  your real `quizapp.db`. The file picker and share sheet are native OS
+  your real `quillfin.db`. The file picker and share sheet are native OS
   dialogs a test can't click, so they're faked at their platform interface.
 - **Restored**: the API key and settings you had before the run are put
   back afterwards.
@@ -208,7 +208,7 @@ supposed to.
 - **Screens that reach `RootShell` run as Linux**
   (`variant: TargetPlatformVariant.only(TargetPlatform.linux)`). That makes
   the real, unmodified `openAppDatabase()` take its FFI branch and open
-  `quizapp.db` in the fake documents directory, instead of calling the
+  `quillfin.db` in the fake documents directory, instead of calling the
   `sqflite` plugin, which has no implementation under `flutter test`. The
   variant resets the platform override after each test on its own.
 - **Seams only where a dependency can't be faked from outside.**

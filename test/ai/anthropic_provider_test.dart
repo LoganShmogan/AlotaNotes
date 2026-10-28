@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:quizapp/ai/anthropic_provider.dart';
-import 'package:quizapp/ai/base.dart';
+import 'package:quillfin/ai/anthropic_provider.dart';
+import 'package:quillfin/ai/base.dart';
 
 void main() {
   test('parses a successful response into GeneratedQuestions', () async {

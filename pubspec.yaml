@@ -1,5 +1,5 @@
-name: quizapp
-description: "A new Flutter project."
+name: quillfin
+description: "QuillFin by Save Point: notes, quizzes and practice problems scheduled with FSRS."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -41,22 +41,24 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Brand fonts from savepoint.co.nz, bundled so the app never needs a
-  # network fetch to render text. Both are SIL OFL (licences alongside).
+  # Placeholder QuillFin brand fonts (see lib/theme/brand.dart), bundled so
+  # text never needs a network fetch. Both SIL OFL (licences alongside).
   fonts:
-    - family: ChakraPetch
+    - family: Outfit
       fonts:
-        - asset: assets/fonts/ChakraPetch-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/ChakraPetch-Bold.ttf
-          weight: 700
-    - family: Figtree
-      fonts:
-        - asset: assets/fonts/Figtree-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Figtree-Medium.ttf
+        - asset: assets/fonts/Outfit-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Figtree-SemiBold.ttf
+        - asset: assets/fonts/Outfit-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Figtree-Bold.ttf
+        - asset: assets/fonts/Outfit-Bold.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
           weight: 700

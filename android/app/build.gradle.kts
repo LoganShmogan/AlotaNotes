@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "cc.savepoint.quizapp"
+    namespace = "com.savepoint.quillfin"
     // Overridden from flutter.compileSdkVersion (still 34/35 on this Flutter
     // version) -- flutter_plugin_android_lifecycle (a file_picker dependency)
     // requires compiling against API 36, which is installed on this machine.
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "cc.savepoint.quizapp"
+        applicationId = "com.savepoint.quillfin"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

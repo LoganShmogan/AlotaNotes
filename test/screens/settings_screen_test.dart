@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/screens/settings/settings_screen.dart';
-import 'package:quizapp/services/reminder_service.dart';
-import 'package:quizapp/settings/app_settings.dart';
-import 'package:quizapp/storage/folders_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/screens/settings/settings_screen.dart';
+import 'package:quillfin/services/reminder_service.dart';
+import 'package:quillfin/settings/app_settings.dart';
+import 'package:quillfin/storage/folders_repo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/fake_notifications.dart';
@@ -167,7 +167,7 @@ void main() {
       await pumpUntil(tester, () => sharePlatform.sharedFiles.isNotEmpty);
       await waitForLoad(tester);
 
-      expect(sharePlatform.lastFileNameOverrides!.single, startsWith('quizapp-export-'));
+      expect(sharePlatform.lastFileNameOverrides!.single, startsWith('quillfin-export-'));
       final json = jsonDecode(utf8.decode(await sharePlatform.sharedFiles.single.readAsBytes()));
       expect((json['folders'] as List).single['name'], 'Physics');
       expect(find.byIcon(Icons.download_outlined), findsOneWidget);

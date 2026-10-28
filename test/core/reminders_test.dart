@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/reminders.dart';
+import 'package:quillfin/core/reminders.dart';
 
 void main() {
   group('nextReminderTime', () {

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=QuillFin
+Comment=Notes and spaced-repetition quiz app
+Exec=quillfin
+Icon=icon
+Categories=Education;
+Terminal=false

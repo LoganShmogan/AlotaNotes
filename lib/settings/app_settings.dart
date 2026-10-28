@@ -18,6 +18,10 @@ const defaultModel = 'gpt-4o-mini';
 const defaultQuestionFormat = questionTypeShortAnswer;
 const defaultReminderHour = 19;
 
+const themeModeSystem = 'system';
+const themeModeLight = 'light';
+const themeModeDark = 'dark';
+
 class AppSettings {
   final String provider;
   final String model;
@@ -27,6 +31,7 @@ class AppSettings {
   final bool remindersEnabled;
   final int reminderHour;
   final int reminderMinute;
+  final String themeMode;
 
   const AppSettings({
     this.provider = defaultProvider,
@@ -37,6 +42,7 @@ class AppSettings {
     this.remindersEnabled = false,
     this.reminderHour = defaultReminderHour,
     this.reminderMinute = 0,
+    this.themeMode = themeModeSystem,
   });
 
   /// A null argument keeps the current value; [clearBaseUrl] is the only way
@@ -51,6 +57,7 @@ class AppSettings {
     bool? remindersEnabled,
     int? reminderHour,
     int? reminderMinute,
+    String? themeMode,
   }) =>
       AppSettings(
         provider: provider ?? this.provider,
@@ -61,6 +68,7 @@ class AppSettings {
         remindersEnabled: remindersEnabled ?? this.remindersEnabled,
         reminderHour: reminderHour ?? this.reminderHour,
         reminderMinute: reminderMinute ?? this.reminderMinute,
+        themeMode: themeMode ?? this.themeMode,
       );
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +80,7 @@ class AppSettings {
         'reminders_enabled': remindersEnabled,
         'reminder_hour': reminderHour,
         'reminder_minute': reminderMinute,
+        'theme_mode': themeMode,
       };
 }
 
@@ -93,6 +102,7 @@ class AppSettingsStore {
       remindersEnabled: data['reminders_enabled'] as bool? ?? false,
       reminderHour: data['reminder_hour'] as int? ?? defaultReminderHour,
       reminderMinute: data['reminder_minute'] as int? ?? 0,
+      themeMode: data['theme_mode'] as String? ?? themeModeSystem,
     );
   }
 

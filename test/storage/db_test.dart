@@ -1,11 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/storage/db.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/storage/db.dart';
 
 import '../helpers/test_env.dart';
 
@@ -57,11 +59,11 @@ void main() {
     setUp(() => debugDefaultTargetPlatformOverride = TargetPlatform.linux);
     tearDown(() => debugDefaultTargetPlatformOverride = null);
 
-    test('creates quizapp.db in the documents directory with the full schema', () async {
+    test('creates quillfin.db in the documents directory with the full schema', () async {
       final db = await openAppDatabase();
       addTearDown(db.close);
 
-      expect(db.path, p.join(documentsDir.path, 'quizapp.db'));
+      expect(db.path, p.join(documentsDir.path, 'quillfin.db'));
       final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name");
       expect(
         tables.map((r) => r['name']),
@@ -105,7 +107,8 @@ void main() {
       expect((await second.query('folders')).single['name'], 'Kept');
     });
 
-    test('upgrades a v1 database to FSRS in place, keeping every row and id', () async {
+    test('adopts a pre-QuillFin quizapp.db and upgrades it to FSRS, keeping every row and id', () async {
+      // Written under the old file name, as the app did before the rename.
       final path = p.join(documentsDir.path, 'quizapp.db');
       final v1 = await databaseFactoryFfi.openDatabase(
         path,
@@ -158,6 +161,8 @@ void main() {
 
       final db = await openAppDatabase();
       addTearDown(db.close);
+      expect(db.path, p.join(documentsDir.path, 'quillfin.db'));
+      expect(File(path).existsSync(), isFalse);
       expect(await db.getVersion(), schemaVersion);
       expect((await db.rawQuery('PRAGMA foreign_keys')).first.values.first, 1);
 
@@ -179,6 +184,21 @@ void main() {
       // And the rebuilt tables still cascade.
       await db.delete('folders');
       expect(await db.query('question_history'), isEmpty);
+    });
+  });
+
+  group('adoptLegacyDatabaseFile', () {
+    test('leaves an existing quillfin.db alone', () async {
+      File(p.join(documentsDir.path, 'quizapp.db')).writeAsStringSync('old');
+      File(p.join(documentsDir.path, 'quillfin.db')).writeAsStringSync('new');
+      await adoptLegacyDatabaseFile(documentsDir.path);
+      expect(File(p.join(documentsDir.path, 'quillfin.db')).readAsStringSync(), 'new');
+      expect(File(p.join(documentsDir.path, 'quizapp.db')).existsSync(), isTrue);
+    });
+
+    test('does nothing without an old file', () async {
+      await adoptLegacyDatabaseFile(documentsDir.path);
+      expect(documentsDir.listSync(), isEmpty);
     });
   });
 

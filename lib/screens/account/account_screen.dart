@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../ai/provider_factory.dart';
 import '../../auth/auth_service.dart';
+import '../../layout/breakpoints.dart';
 import '../../services/reminder_service.dart';
 import '../../settings/app_settings.dart';
 import '../../theme/widgets.dart';
@@ -62,12 +63,14 @@ class _AccountScreenState extends State<AccountScreen> {
     // choices (question format, retention, reminders).
     final baseUrl = _baseUrlController.text.trim();
     final settings = await _settingsStore.load();
-    await _settingsStore.save(settings.copyWith(
-      provider: _provider,
-      model: _modelController.text.trim(),
-      baseUrl: baseUrl.isEmpty ? null : baseUrl,
-      clearBaseUrl: baseUrl.isEmpty,
-    ));
+    await _settingsStore.save(
+      settings.copyWith(
+        provider: _provider,
+        model: _modelController.text.trim(),
+        baseUrl: baseUrl.isEmpty ? null : baseUrl,
+        clearBaseUrl: baseUrl.isEmpty,
+      ),
+    );
     if (!mounted) return;
     setState(() => _saved = true);
   }
@@ -76,7 +79,9 @@ class _AccountScreenState extends State<AccountScreen> {
     await widget.authService.logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => LoginScreen(authService: widget.authService, reminders: widget.reminders)),
+      MaterialPageRoute(
+        builder: (_) => LoginScreen(authService: widget.authService, reminders: widget.reminders),
+      ),
       (route) => false,
     );
   }
@@ -95,54 +100,57 @@ class _AccountScreenState extends State<AccountScreen> {
       appBar: AppBar(title: const Text('Account')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.account_circle),
-                  title: Text(_user?.username ?? '...'),
-                  subtitle: const Text('Local device account'),
+          : LayoutBuilder(
+              builder: (context, constraints) => ListView(
+                padding: EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: centeredInset(constraints.maxWidth, context.windowSize.gutter),
                 ),
-                const Divider(height: 32),
-                const SectionLabel('AI provider'),
-                DropdownButtonFormField<String>(
-                  initialValue: _provider,
-                  items: [
-                    for (final p in knownProviders) DropdownMenuItem(value: p, child: Text(p)),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) setState(() => _provider = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _modelController,
-                  decoration: const InputDecoration(labelText: 'Model (e.g. gpt-4o-mini)'),
-                  onChanged: (_) => setState(() => _saved = false),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _baseUrlController,
-                  decoration: const InputDecoration(labelText: 'Base URL override (optional)'),
-                  onChanged: (_) => setState(() => _saved = false),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _apiKeyController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'API key'),
-                  onChanged: (_) => setState(() => _saved = false),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(onPressed: _save, child: Text(_saved ? 'Saved' : 'Save')),
-                const Divider(height: 32),
-                Text(
-                  'Cloud storage connections (Dropbox, Google Drive, OneNote) — coming later.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 32),
-                OutlinedButton(onPressed: _logout, child: const Text('Log out')),
-              ],
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.account_circle),
+                    title: Text(_user?.username ?? '...'),
+                    subtitle: const Text('Local device account'),
+                  ),
+                  const Divider(height: 32),
+                  const SectionLabel('AI provider'),
+                  DropdownButtonFormField<String>(
+                    initialValue: _provider,
+                    items: [for (final p in knownProviders) DropdownMenuItem(value: p, child: Text(p))],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _provider = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _modelController,
+                    decoration: const InputDecoration(labelText: 'Model (e.g. gpt-4o-mini)'),
+                    onChanged: (_) => setState(() => _saved = false),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _baseUrlController,
+                    decoration: const InputDecoration(labelText: 'Base URL override (optional)'),
+                    onChanged: (_) => setState(() => _saved = false),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _apiKeyController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'API key'),
+                    onChanged: (_) => setState(() => _saved = false),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(onPressed: _save, child: Text(_saved ? 'Saved' : 'Save')),
+                  const Divider(height: 32),
+                  Text(
+                    'Cloud storage connections (Dropbox, Google Drive, OneNote) — coming later.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 32),
+                  OutlinedButton(onPressed: _logout, child: const Text('Log out')),
+                ],
+              ),
             ),
     );
   }

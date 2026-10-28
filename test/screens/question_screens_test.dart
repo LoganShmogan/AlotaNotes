@@ -2,13 +2,13 @@
 // (editing one question), which navigate into each other.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/screens/notes/note_editor_screen.dart';
-import 'package:quizapp/screens/notes/note_questions_screen.dart';
-import 'package:quizapp/screens/quiz/question_editor_screen.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
-import 'package:quizapp/storage/questions_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/screens/notes/note_editor_screen.dart';
+import 'package:quillfin/screens/notes/note_questions_screen.dart';
+import 'package:quillfin/screens/quiz/question_editor_screen.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
+import 'package:quillfin/storage/questions_repo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/test_env.dart';
@@ -135,7 +135,7 @@ void main() {
         final q = await multipleChoice();
         await show(tester, q.id);
 
-        expect(find.text('CHOICES (SELECT THE CORRECT ONE)'), findsOneWidget);
+        expect(find.text('Choices (select the correct one)'), findsOneWidget);
         expect(find.byType(Radio<int>), findsNWidgets(3));
 
         await tester.enterText(find.widgetWithText(TextField, 'Ribosome'), ' Chromosome ');

@@ -4,13 +4,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/storage/db.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
-import 'package:quizapp/storage/questions_repo.dart';
-import 'package:quizapp/storage/reviews_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/storage/db.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
+import 'package:quillfin/storage/questions_repo.dart';
+import 'package:quillfin/storage/reviews_repo.dart';
 
 Future<Database> _openTestDatabase() async {
   final db = await databaseFactory.openDatabase(

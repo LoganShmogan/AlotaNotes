@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/services/reminder_service.dart';
-import 'package:quizapp/settings/app_settings.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
-import 'package:quizapp/storage/problems_repo.dart';
-import 'package:quizapp/storage/questions_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/services/reminder_service.dart';
+import 'package:quillfin/settings/app_settings.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
+import 'package:quillfin/storage/problems_repo.dart';
+import 'package:quillfin/storage/questions_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 

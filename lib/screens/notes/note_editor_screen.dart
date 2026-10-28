@@ -1,11 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../ai/base.dart';
 import '../../ai/provider_factory.dart';
 import '../../core/text_extraction.dart';
+import '../../layout/breakpoints.dart';
 import '../../services/question_generation_service.dart';
 import '../../settings/app_settings.dart';
 import '../../storage/notes_repo.dart';
@@ -20,7 +22,22 @@ class NoteEditorScreen extends StatefulWidget {
   // Injectable so widget tests can generate questions without a real HTTP
   // call; the app always uses the default.
   final ProviderBuilder providerBuilder;
-  const NoteEditorScreen({super.key, required this.db, required this.noteId, this.providerBuilder = buildProvider});
+
+  /// Called after a save, so a list showing this note can refresh its title.
+  final VoidCallback? onSaved;
+
+  /// True when shown as the detail pane of a folder's list-detail layout,
+  /// where there's nothing to go back to.
+  final bool embedded;
+
+  const NoteEditorScreen({
+    super.key,
+    required this.db,
+    required this.noteId,
+    this.providerBuilder = buildProvider,
+    this.onSaved,
+    this.embedded = false,
+  });
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -53,6 +70,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     await _notesRepo.update(widget.noteId, title: _titleController.text.trim(), body: _bodyController.text);
+    widget.onSaved?.call();
     if (mounted) setState(() => _saving = false);
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved.')));
   }
@@ -100,12 +118,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       );
       final created = await service.generateForNote(widget.noteId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Generated ${created.length} question(s).')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Generated ${created.length} question(s).')));
     } on AIProviderError catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Question generation failed: ${e.message}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Question generation failed: ${e.message}')));
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -120,15 +136,28 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
+        const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
+      },
+      child: _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Note'),
+        automaticallyImplyLeading: !widget.embedded,
         actions: [
           IconButton(
             tooltip: 'View questions generated from this note',
             icon: const Icon(Icons.quiz_outlined),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => NoteQuestionsScreen(db: widget.db, noteId: widget.noteId)),
+              MaterialPageRoute(
+                builder: (_) => NoteQuestionsScreen(db: widget.db, noteId: widget.noteId),
+              ),
             ),
           ),
           IconButton(
@@ -144,6 +173,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             label: const Text('Generate'),
           ),
           IconButton(
+            tooltip: 'Save (Ctrl+S)',
             icon: _saving
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.save),
@@ -153,26 +183,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: _bodyController,
-                      decoration: const InputDecoration(labelText: 'Body', alignLabelWithHint: true),
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
+          // Capped at a comfortable line length on wide panes.
+          : ContentWidth(
+              maxWidth: 760,
+              child: Padding(
+                padding: EdgeInsets.all(context.windowSize.gutter),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(labelText: 'Title'),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: TextField(
+                        controller: _bodyController,
+                        decoration: const InputDecoration(labelText: 'Body', alignLabelWithHint: true),
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
     );

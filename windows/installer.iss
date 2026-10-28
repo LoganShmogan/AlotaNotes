@@ -5,20 +5,20 @@
 ; .github/workflows/build.yml using the Inno Setup CLI (ISCC.exe), which
 ; ships preinstalled on GitHub's windows-latest runners.
 
-#define MyAppName "Quiz App AI"
-#define MyAppExeName "quizapp.exe"
-#define MyAppPublisher "SavePoint"
+#define MyAppName "QuillFin"
+#define MyAppExeName "quillfin.exe"
+#define MyAppPublisher "Save Point"
 
 [Setup]
 AppId={{B6E1F9F0-6F7B-4C1D-9C0B-5B7A1D9E2F3A}
 AppName={#MyAppName}
 AppVersion=0.1.0
 AppPublisher={#MyAppPublisher}
-DefaultDirName={autopf}\QuizAppAI
+DefaultDirName={autopf}\QuillFin
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=installer_output
-OutputBaseFilename=QuizAppAI-Windows-Setup
+OutputBaseFilename=QuillFin-Windows-Setup
 Compression=lzma
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible

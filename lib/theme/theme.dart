@@ -1,235 +1,236 @@
-/// Visual theme, taken from savepoint.co.nz's own stylesheet (its CSS
-/// custom properties, read directly from the live site): warm paper
-/// background, ink text, a plum header with a purple underline, yellow
-/// buttons, 3px ink borders, square corners and hard offset "pixel"
-/// shadows instead of blurred elevation. Chakra Petch for headings and
-/// labels, Figtree for body text, both bundled (assets/fonts). See
+/// Builds QuillFin's light and dark themes from the tokens in brand.dart:
+/// calm paper background, hairline borders, soft rounded surfaces, teal
+/// ("fin") primary and gold ("quill") highlights. Outfit for headings and
+/// controls, Inter for body text, both bundled (assets/fonts). See
 /// Docs/gui_theming.md.
 library;
 
 import 'package:flutter/material.dart';
 
-// Brand tokens, named as on the site.
-const colorPaper = Color(0xFFF7F4EF);
-const colorPaperRaised = Color(0xFFFFFFFF);
-const colorPaperTint = Color(0xFFEFE8F2);
-const colorInk = Color(0xFF221C27);
-const colorInkSoft = Color(0xFF4A4352);
-const colorPlum = Color(0xFF2B2233);
-const colorPlumSoft = Color(0xFF3A2F45);
-const colorOnPlum = Color(0xFFFFFFFF);
-const colorOnPlumSoft = Color(0xFFE4DCEA);
-const colorPurple = Color(0xFFB791C2);
-const colorPurpleDeep = Color(0xFF5B3D6B);
-const colorYellow = Color(0xFFEECC67);
-const colorBlue = Color(0xFF699FD5);
-const colorGreen = Color(0xFF82C88A);
-// Not a site token: the site never shows an error. A deep red that still
-// reads against paper, for wrong answers and destructive actions.
-const colorDanger = Color(0xFFB3261E);
+import 'brand.dart';
 
-const borderWidth = 3.0;
-const fontDisplay = 'ChakraPetch';
-const fontBody = 'Figtree';
+export 'brand.dart';
 
-const inkBorder = BorderSide(color: colorInk, width: borderWidth);
-
-/// The site's `--pixel-shadow`: a solid block offset down-right, no blur.
-List<BoxShadow> pixelShadow({Color color = colorPurple, double offset = 6}) => [
-      BoxShadow(color: color, offset: Offset(offset, offset)),
-    ];
-
-const _squareInk = RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: inkBorder);
-
-TextStyle _display(double size, {FontWeight weight = FontWeight.w700, Color color = colorInk}) =>
-    TextStyle(fontFamily: fontDisplay, fontSize: size, fontWeight: weight, color: color, height: 1.2);
-
-ThemeData buildAppTheme() {
-  const scheme = ColorScheme.light(
-    primary: colorPurpleDeep,
-    onPrimary: colorOnPlum,
-    primaryContainer: colorPaperTint,
-    onPrimaryContainer: colorInk,
-    secondary: colorYellow,
-    onSecondary: colorInk,
-    secondaryContainer: colorYellow,
-    onSecondaryContainer: colorInk,
-    tertiary: colorBlue,
-    surface: colorPaper,
-    onSurface: colorInk,
-    onSurfaceVariant: colorInkSoft,
-    surfaceContainerLowest: colorPaperRaised,
-    surfaceContainerLow: colorPaperRaised,
-    surfaceContainer: colorPaperRaised,
-    surfaceContainerHigh: colorPaperTint,
-    surfaceContainerHighest: colorPaperTint,
-    outline: colorInk,
-    outlineVariant: colorInkSoft,
-    error: colorDanger,
+ThemeData buildAppTheme({Brightness brightness = Brightness.light}) {
+  final p = brightness == Brightness.dark ? BrandPalette.dark : BrandPalette.light;
+  final scheme = ColorScheme(
+    brightness: brightness,
+    primary: p.fin,
+    onPrimary: p.onFin,
+    primaryContainer: p.surfaceTint,
+    onPrimaryContainer: p.ink,
+    secondary: p.quill,
+    onSecondary: p.onQuill,
+    secondaryContainer: p.quill,
+    onSecondaryContainer: p.onQuill,
+    tertiary: p.info,
+    onTertiary: p.onFin,
+    error: p.danger,
+    onError: p.onFin,
+    surface: p.paper,
+    onSurface: p.ink,
+    onSurfaceVariant: p.inkSoft,
+    surfaceContainerLowest: p.surface,
+    surfaceContainerLow: p.surface,
+    surfaceContainer: p.surface,
+    surfaceContainerHigh: p.surfaceTint,
+    surfaceContainerHighest: p.surfaceTint,
+    outline: p.line,
+    outlineVariant: p.line,
+    inverseSurface: p.deep,
+    onInverseSurface: p.onDeep,
   );
 
-  final buttonText = _display(17, weight: FontWeight.w700);
-  const buttonPadding = EdgeInsets.symmetric(horizontal: 20, vertical: 14);
+  TextStyle display(double size, {FontWeight weight = FontWeight.w700, double height = 1.2, double spacing = -0.2}) =>
+      TextStyle(fontFamily: fontDisplay, fontSize: size, fontWeight: weight, color: p.ink, height: height, letterSpacing: spacing);
+
+  final controlShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusControl));
+  const controlPadding = EdgeInsets.symmetric(horizontal: 20, vertical: 14);
+  const controlSize = Size(64, 48);
+  final controlText = display(16, weight: FontWeight.w600, spacing: 0);
+  OutlineInputBorder inputBorder(Color color, [double width = hairline]) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusControl),
+        borderSide: BorderSide(color: color, width: width),
+      );
 
   return ThemeData(
     useMaterial3: true,
+    brightness: brightness,
     colorScheme: scheme,
     fontFamily: fontBody,
-    scaffoldBackgroundColor: colorPaper,
-    splashFactory: NoSplash.splashFactory,
+    scaffoldBackgroundColor: p.paper,
+    extensions: [BrandColors(p)],
+    visualDensity: VisualDensity.standard,
     textTheme: TextTheme(
-      displaySmall: _display(34),
-      headlineMedium: _display(28),
-      headlineSmall: _display(24),
-      titleLarge: _display(21),
-      titleMedium: _display(17, weight: FontWeight.w600),
-      titleSmall: _display(15, weight: FontWeight.w600),
-      labelLarge: _display(15, weight: FontWeight.w600),
-      bodyLarge: const TextStyle(fontSize: 16, height: 1.5, color: colorInk),
-      bodyMedium: const TextStyle(fontSize: 15, height: 1.5, color: colorInk),
-      bodySmall: const TextStyle(fontSize: 13, height: 1.4, color: colorInkSoft),
+      displaySmall: display(36, spacing: -0.6),
+      headlineMedium: display(28, spacing: -0.4),
+      headlineSmall: display(24, spacing: -0.3),
+      titleLarge: display(20, weight: FontWeight.w600),
+      titleMedium: display(17, weight: FontWeight.w600, spacing: 0),
+      titleSmall: display(15, weight: FontWeight.w600, spacing: 0),
+      labelLarge: display(15, weight: FontWeight.w600, spacing: 0),
+      bodyLarge: TextStyle(fontSize: 16, height: 1.5, color: p.ink),
+      bodyMedium: TextStyle(fontSize: 15, height: 1.5, color: p.ink),
+      bodySmall: TextStyle(fontSize: 13, height: 1.4, color: p.inkSoft),
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: colorPlum,
-      foregroundColor: colorOnPlum,
+      backgroundColor: p.paper,
+      foregroundColor: p.ink,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: _display(22, color: colorOnPlum),
-      shape: const Border(bottom: BorderSide(color: colorPurple, width: 4)),
+      titleTextStyle: display(22),
+      shape: Border(bottom: BorderSide(color: p.line)),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: colorPlum,
-      indicatorColor: colorYellow,
-      indicatorShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      surfaceTintColor: Colors.transparent,
-      height: 68,
-      iconTheme: WidgetStateProperty.resolveWith(
-        (states) => IconThemeData(color: states.contains(WidgetState.selected) ? colorInk : colorOnPlumSoft),
-      ),
-      labelTextStyle: WidgetStateProperty.resolveWith(
-        (states) => _display(
-          13,
-          weight: FontWeight.w600,
-          color: states.contains(WidgetState.selected) ? colorYellow : colorOnPlumSoft,
-        ),
-      ),
-    ),
-    cardTheme: const CardThemeData(
-      color: colorPaperRaised,
+      backgroundColor: p.surface,
+      indicatorColor: p.surfaceTint,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      shape: _squareInk,
-      margin: EdgeInsets.symmetric(vertical: 6),
+      height: 68,
+      iconTheme: WidgetStateProperty.resolveWith(
+        (s) => IconThemeData(color: s.contains(WidgetState.selected) ? p.fin : p.inkSoft),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (s) => display(12.5, weight: FontWeight.w600, spacing: 0)
+            .copyWith(color: s.contains(WidgetState.selected) ? p.fin : p.inkSoft),
+      ),
+    ),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: p.surface,
+      indicatorColor: p.surfaceTint,
+      selectedIconTheme: IconThemeData(color: p.fin),
+      unselectedIconTheme: IconThemeData(color: p.inkSoft),
+      selectedLabelTextStyle: display(12.5, weight: FontWeight.w600, spacing: 0).copyWith(color: p.fin),
+      unselectedLabelTextStyle: display(12.5, weight: FontWeight.w600, spacing: 0).copyWith(color: p.inkSoft),
+    ),
+    cardTheme: CardThemeData(
+      color: p.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusCard), side: BorderSide(color: p.line)),
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      clipBehavior: Clip.antiAlias,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: colorYellow,
-        foregroundColor: colorInk,
-        disabledBackgroundColor: colorPaperTint,
-        disabledForegroundColor: colorInkSoft,
+        backgroundColor: p.fin,
+        foregroundColor: p.onFin,
+        disabledBackgroundColor: p.surfaceTint,
+        disabledForegroundColor: p.inkSoft,
         elevation: 0,
-        shape: _squareInk,
-        padding: buttonPadding,
-        minimumSize: const Size(64, 50),
-        textStyle: buttonText,
+        shape: controlShape,
+        padding: controlPadding,
+        minimumSize: controlSize,
+        textStyle: controlText,
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: colorPlum,
-        foregroundColor: colorOnPlum,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: colorPlum, width: borderWidth)),
-        padding: buttonPadding,
-        minimumSize: const Size(64, 50),
-        textStyle: buttonText,
+        backgroundColor: p.fin,
+        foregroundColor: p.onFin,
+        shape: controlShape,
+        padding: controlPadding,
+        minimumSize: controlSize,
+        textStyle: controlText,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: colorInk,
-        backgroundColor: colorPaperRaised,
-        side: inkBorder,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        padding: buttonPadding,
-        minimumSize: const Size(64, 50),
-        textStyle: buttonText,
+        foregroundColor: p.ink,
+        backgroundColor: p.surface,
+        side: BorderSide(color: p.line),
+        shape: controlShape,
+        padding: controlPadding,
+        minimumSize: controlSize,
+        textStyle: controlText,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: colorPurpleDeep,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        textStyle: _display(15, weight: FontWeight.w700),
-      ),
+      style: TextButton.styleFrom(foregroundColor: p.fin, shape: controlShape, textStyle: controlText),
     ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: colorYellow,
-      foregroundColor: colorInk,
-      elevation: 0,
-      focusElevation: 0,
-      hoverElevation: 0,
-      highlightElevation: 0,
-      shape: _squareInk,
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: p.fin,
+      foregroundColor: p.onFin,
+      elevation: 2,
+      highlightElevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: colorPaperRaised,
-      labelStyle: const TextStyle(color: colorInkSoft),
-      floatingLabelStyle: _display(15, weight: FontWeight.w600, color: colorPurpleDeep),
-      border: const OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: colorInk, width: 2)),
-      enabledBorder:
-          const OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: colorInk, width: 2)),
-      focusedBorder: const OutlineInputBorder(
-        borderRadius: BorderRadius.zero,
-        borderSide: BorderSide(color: colorPurpleDeep, width: borderWidth),
-      ),
-      disabledBorder:
-          const OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: colorInkSoft)),
+      fillColor: p.surface,
+      labelStyle: TextStyle(color: p.inkSoft),
+      hintStyle: TextStyle(color: p.inkSoft),
+      floatingLabelStyle: TextStyle(color: p.fin, fontWeight: FontWeight.w600),
+      border: inputBorder(p.line),
+      enabledBorder: inputBorder(p.line),
+      focusedBorder: inputBorder(p.fin, 2),
+      errorBorder: inputBorder(p.danger),
+      focusedErrorBorder: inputBorder(p.danger, 2),
+      disabledBorder: inputBorder(p.line),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: colorPaperRaised,
-      selectedColor: colorYellow,
-      checkmarkColor: colorInk,
-      side: const BorderSide(color: colorInk, width: 2),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      labelStyle: _display(14, weight: FontWeight.w600),
+      backgroundColor: p.surface,
+      selectedColor: p.surfaceTint,
+      checkmarkColor: p.fin,
+      side: BorderSide(color: p.line),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusPill)),
+      labelStyle: display(14, weight: FontWeight.w500, spacing: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     ),
     listTileTheme: ListTileThemeData(
-      iconColor: colorPurpleDeep,
-      titleTextStyle: const TextStyle(fontFamily: fontBody, fontSize: 16, fontWeight: FontWeight.w600, color: colorInk),
-      subtitleTextStyle: const TextStyle(fontFamily: fontBody, fontSize: 14, color: colorInkSoft),
+      iconColor: p.inkSoft,
+      titleTextStyle: TextStyle(fontFamily: fontBody, fontSize: 16, fontWeight: FontWeight.w600, color: p.ink),
+      subtitleTextStyle: TextStyle(fontFamily: fontBody, fontSize: 14, color: p.inkSoft),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusControl)),
     ),
-    dividerTheme: const DividerThemeData(color: colorPaperTint, thickness: 2),
+    dividerTheme: DividerThemeData(color: p.line, thickness: hairline, space: 1),
     dialogTheme: DialogThemeData(
-      backgroundColor: colorPaperRaised,
+      backgroundColor: p.surface,
       surfaceTintColor: Colors.transparent,
-      shape: _squareInk,
-      titleTextStyle: _display(21),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      titleTextStyle: display(20, weight: FontWeight.w600),
     ),
-    bottomSheetTheme: const BottomSheetThemeData(
-      backgroundColor: colorPaper,
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: p.paper,
       surfaceTintColor: Colors.transparent,
-      shape: Border(top: BorderSide(color: colorInk, width: borderWidth)),
+      showDragHandle: true,
+      dragHandleColor: p.line,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     ),
-    popupMenuTheme: const PopupMenuThemeData(color: colorPaperRaised, shape: _squareInk),
+    popupMenuTheme: PopupMenuThemeData(
+      color: p.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusControl), side: BorderSide(color: p.line)),
+    ),
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: colorPlum,
-      contentTextStyle: const TextStyle(fontFamily: fontBody, color: colorOnPlum, fontSize: 15),
+      backgroundColor: p.deep,
+      contentTextStyle: TextStyle(fontFamily: fontBody, color: p.onDeep, fontSize: 15),
       behavior: SnackBarBehavior.floating,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: colorPurple, width: 2)),
+      width: null,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusControl)),
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: colorPurpleDeep, linearTrackColor: colorPaperTint),
-    sliderTheme: const SliderThemeData(
-      activeTrackColor: colorPurpleDeep,
-      inactiveTrackColor: colorPaperTint,
-      thumbColor: colorYellow,
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(color: p.deep, borderRadius: BorderRadius.circular(8)),
+      textStyle: TextStyle(fontFamily: fontBody, color: p.onDeep, fontSize: 13),
+      waitDuration: const Duration(milliseconds: 400),
     ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(color: p.fin, linearTrackColor: p.surfaceTint),
+    sliderTheme: SliderThemeData(activeTrackColor: p.fin, inactiveTrackColor: p.surfaceTint, thumbColor: p.fin),
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? colorYellow : colorInkSoft),
-      trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? colorPlum : colorPaperTint),
-      trackOutlineColor: const WidgetStatePropertyAll(colorInk),
+      thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? p.onFin : p.inkSoft),
+      trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? p.fin : p.surfaceTint),
+      trackOutlineColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? p.fin : p.line),
     ),
-    radioTheme: const RadioThemeData(fillColor: WidgetStatePropertyAll(colorPurpleDeep)),
+    radioTheme: RadioThemeData(fillColor: WidgetStatePropertyAll(p.fin)),
+    checkboxTheme: CheckboxThemeData(fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? p.fin : null)),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: SegmentedButton.styleFrom(
+        selectedBackgroundColor: p.surfaceTint,
+        selectedForegroundColor: p.fin,
+        side: BorderSide(color: p.line),
+        textStyle: display(14, weight: FontWeight.w600, spacing: 0),
+      ),
+    ),
   );
 }

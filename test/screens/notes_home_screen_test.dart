@@ -29,10 +29,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:quizapp/screens/notes/folder_detail_screen.dart';
-import 'package:quizapp/screens/notes/notes_home_screen.dart';
-import 'package:quizapp/storage/db.dart';
-import 'package:quizapp/storage/folders_repo.dart';
+import 'package:quillfin/screens/notes/folder_detail_screen.dart';
+import 'package:quillfin/screens/notes/notes_home_screen.dart';
+import 'package:quillfin/storage/db.dart';
+import 'package:quillfin/storage/folders_repo.dart';
 
 /// `pumpAndSettle()` refuses to work while a `CircularProgressIndicator` is
 /// on screen (it's an infinite animation, so "settled" never becomes true) --

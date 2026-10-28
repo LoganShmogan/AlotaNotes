@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/ai/base.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/services/question_generation_service.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
-import 'package:quizapp/storage/questions_repo.dart';
+import 'package:quillfin/ai/base.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/services/question_generation_service.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
+import 'package:quillfin/storage/questions_repo.dart';
 
 import '../helpers/test_env.dart';
 

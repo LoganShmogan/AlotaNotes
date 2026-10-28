@@ -50,7 +50,7 @@ class DataExportService {
   Future<({XFile file, String name})> exportFile() async {
     final data = await buildExport();
     final timestamp = DateTime.now().toUtc().toIso8601String().replaceAll(RegExp(r'[:.]'), '-');
-    final name = 'quizapp-export-$timestamp.json';
+    final name = 'quillfin-export-$timestamp.json';
     final bytes = utf8.encode(const JsonEncoder.withIndent('  ').convert(data));
     return (file: XFile.fromData(bytes, mimeType: 'application/json', name: name), name: name);
   }

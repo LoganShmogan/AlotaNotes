@@ -9,6 +9,7 @@ import '../../settings/app_settings.dart';
 import '../../storage/db.dart';
 import '../../storage/questions_repo.dart';
 import '../../storage/reviews_repo.dart';
+import '../../layout/breakpoints.dart';
 import '../../theme/theme.dart';
 import '../../theme/widgets.dart';
 import '../review/rating_buttons.dart';
@@ -41,7 +42,11 @@ class _QuizScreenState extends State<QuizScreen> {
   String? _selectedChoice;
 
   // Set once the current question has been answered.
-  ({String givenAnswer, bool isCorrect, String gradingMethod, DateTime answeredAt})? _graded;
+  _Graded? _graded;
+
+  // Holds keyboard focus once an answer is graded, so 1-4 reach the rating
+  // shortcuts after the answer field is disabled.
+  final _keyFocus = FocusNode(debugLabel: 'quiz keys');
 
   @override
   void initState() {
@@ -95,6 +100,7 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() {
       _graded = (givenAnswer: givenAnswer, isCorrect: isCorrect, gradingMethod: gradingMethod, answeredAt: utcNow());
     });
+    _keyFocus.requestFocus();
   }
 
   Future<void> _rate(ReviewRating rating) async {
@@ -121,92 +127,145 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void dispose() {
     _answerController.dispose();
+    _keyFocus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Quiz')),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _current == null
-                ? ListView(
-                    children: [
-                      const SizedBox(height: 80),
-                      EmptyState(
-                        icon: Icons.celebration_outlined,
-                        message: _reviewed == 0
-                            ? 'Nothing due right now. Nice work!'
-                            : 'Session done: $_reviewed reviewed. Nothing else is due right now.',
-                      ),
-                    ],
-                  )
-                : _buildQuestion(_current!),
+    final current = _current;
+    final graded = _graded;
+    final pinRatings = graded != null && context.windowSize == WindowSize.compact && !context.isShortHeight;
+    final ratings = current == null || graded == null ? null : _ratingButtons(current, graded);
+    return CallbackShortcuts(
+      bindings: ratingShortcuts(graded == null || _saving ? null : _rate),
+      child: Focus(
+        focusNode: _keyFocus,
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Quiz')),
+          body: RefreshIndicator(
+            onRefresh: _refresh,
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : current == null
+                    ? ListView(
+                        children: [
+                          const SizedBox(height: 80),
+                          EmptyState(
+                            icon: Icons.celebration_outlined,
+                            message: _reviewed == 0
+                                ? 'Nothing due right now. Nice work!'
+                                : 'Session done: $_reviewed reviewed. Nothing else is due right now.',
+                          ),
+                        ],
+                      )
+                    : _buildQuestion(current, inlineRatings: pinRatings ? null : ratings),
+          ),
+          // Compact: ratings pinned at the bottom, within thumb reach.
+          bottomNavigationBar: pinRatings
+              ? SafeArea(
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                    decoration: BoxDecoration(
+                      color: context.brand.paper,
+                      border: Border(top: BorderSide(color: context.brand.line)),
+                    ),
+                    child: ratings,
+                  ),
+                )
+              : null,
+        ),
       ),
     );
   }
 
-  Widget _buildQuestion(Question question) {
+  Widget _ratingButtons(Question question, _Graded graded) => RatingButtons(
+        previews: previewNextDue(question.card, graded.answeredAt, scheduler: _scheduler),
+        now: graded.answeredAt,
+        highlighted: suggestedRating(graded.isCorrect),
+        // Disabled while saving, so a double tap can't review twice.
+        onSelected: _saving ? null : _rate,
+      );
+
+  Widget _buildQuestion(Question question, {Widget? inlineRatings}) {
     final graded = _graded;
     final theme = Theme.of(context);
+    final b = context.brand;
+    final gutter = context.windowSize.gutter;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 24),
       children: [
-        Text('${_queue.length} more due after this one', style: theme.textTheme.bodySmall),
-        const SizedBox(height: 12),
-        PixelCard(
+        ContentWidth(
+          maxWidth: maxReadingWidth,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(question.prompt, style: theme.textTheme.titleLarge),
-              const SizedBox(height: 16),
-              if (question.questionType == questionTypeMultipleChoice)
-                // groupValue/onChanged are deprecated in favor of RadioGroup as of
-                // Flutter 3.32, but still functional; not worth migrating for one
-                // radio list yet.
-                ...question.choices.map((choice) => RadioListTile<String>(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(choice.choiceText),
-                      // ignore: deprecated_member_use
-                      groupValue: _selectedChoice,
-                      value: choice.choiceText,
-                      // ignore: deprecated_member_use
-                      onChanged: graded != null ? null : (value) => setState(() => _selectedChoice = value),
-                    ))
-              else
-                TextField(
-                  controller: _answerController,
-                  enabled: graded == null,
-                  decoration: const InputDecoration(labelText: 'Your answer'),
+              Text('${_queue.length} more due after this one', style: theme.textTheme.bodySmall),
+              const SizedBox(height: 12),
+              BrandCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(question.prompt, style: theme.textTheme.titleLarge),
+                    const SizedBox(height: 16),
+                    if (question.questionType == questionTypeMultipleChoice)
+                      // groupValue/onChanged are deprecated in favor of RadioGroup as of
+                      // Flutter 3.32, but still functional; not worth migrating for one
+                      // radio list yet.
+                      ...question.choices.map((choice) => RadioListTile<String>(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(choice.choiceText),
+                            // ignore: deprecated_member_use
+                            groupValue: _selectedChoice,
+                            value: choice.choiceText,
+                            // ignore: deprecated_member_use
+                            onChanged: graded != null ? null : (value) => setState(() => _selectedChoice = value),
+                          ))
+                    else
+                      TextField(
+                        controller: _answerController,
+                        enabled: graded == null,
+                        autofocus: true,
+                        decoration: const InputDecoration(labelText: 'Your answer'),
+                        onSubmitted: (_) => _submit(),
+                      ),
+                    if (graded == null) ...[
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: PrimaryButton(label: 'Submit', onPressed: _submit),
+                      ),
+                    ],
+                  ],
                 ),
-              const SizedBox(height: 16),
-              if (graded == null) PixelButton(label: 'Submit', onPressed: _submit),
+              ),
+              if (graded != null) ...[
+                const SizedBox(height: 14),
+                BrandCard(
+                  color: (graded.isCorrect ? b.success : b.danger).withValues(alpha: 0.14),
+                  child: Row(
+                    children: [
+                      Icon(graded.isCorrect ? Icons.check_circle : Icons.cancel, color: graded.isCorrect ? b.success : b.danger),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          graded.isCorrect ? 'Correct!' : 'Incorrect. Expected: ${question.expectedAnswer}',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SectionLabel('How well did you know it?'),
+                ?inlineRatings,
+              ],
             ],
           ),
         ),
-        if (graded != null) ...[
-          const SizedBox(height: 16),
-          PixelCard(
-            color: graded.isCorrect ? colorGreen : colorPaperTint,
-            shadowColor: colorInk,
-            child: Text(
-              graded.isCorrect ? 'Correct!' : 'Incorrect. Expected: ${question.expectedAnswer}',
-              style: theme.textTheme.titleMedium,
-            ),
-          ),
-          const SectionLabel('How well did you know it?'),
-          RatingButtons(
-            previews: previewNextDue(question.card, graded.answeredAt, scheduler: _scheduler),
-            now: graded.answeredAt,
-            highlighted: suggestedRating(graded.isCorrect),
-            // Disabled while saving, so a double tap can't review twice.
-            onSelected: _saving ? null : _rate,
-          ),
-        ],
       ],
     );
   }
 }
+
+typedef _Graded = ({String givenAnswer, bool isCorrect, String gradingMethod, DateTime answeredAt});

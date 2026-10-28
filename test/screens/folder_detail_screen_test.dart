@@ -4,12 +4,12 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/screens/notes/bulk_import_staging_screen.dart';
-import 'package:quizapp/screens/notes/folder_detail_screen.dart';
-import 'package:quizapp/screens/notes/note_editor_screen.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/screens/notes/bulk_import_staging_screen.dart';
+import 'package:quillfin/screens/notes/folder_detail_screen.dart';
+import 'package:quillfin/screens/notes/note_editor_screen.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/test_env.dart';

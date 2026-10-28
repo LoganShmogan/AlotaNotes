@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:quizapp/ai/base.dart';
-import 'package:quizapp/ai/openai_provider.dart';
-import 'package:quizapp/core/models.dart';
+import 'package:quillfin/ai/base.dart';
+import 'package:quillfin/ai/openai_provider.dart';
+import 'package:quillfin/core/models.dart';
 
 void main() {
   test('parses short-answer questions', () {

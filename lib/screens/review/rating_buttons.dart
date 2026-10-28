@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/models.dart';
 import '../../core/scheduling.dart';
@@ -6,7 +7,8 @@ import '../../theme/theme.dart';
 
 /// The four FSRS grades as a row of buttons, each labelled with when that
 /// grade would bring the item back ("Good · 3d"). [highlighted] (the
-/// suggested or currently chosen grade) is drawn filled.
+/// suggested or currently chosen grade) is drawn filled. Keys 1-4 pick a
+/// grade wherever these buttons are on screen (see [ratingShortcuts]).
 class RatingButtons extends StatelessWidget {
   final Map<ReviewRating, DateTime> previews;
   final DateTime now;
@@ -34,15 +36,18 @@ class RatingButtons extends StatelessWidget {
   }
 
   Widget _button(BuildContext context, ReviewRating rating) {
+    final b = context.brand;
     final selected = rating == highlighted;
     final interval = formatInterval(previews[rating]!.difference(now));
     final style = OutlinedButton.styleFrom(
-      backgroundColor: selected ? colorYellow : colorPaperRaised,
+      backgroundColor: selected ? b.fin : b.surface,
+      foregroundColor: selected ? b.onFin : b.ink,
+      side: BorderSide(color: selected ? b.fin : b.line),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
       minimumSize: const Size(0, 58),
     );
-    return Container(
-      decoration: BoxDecoration(boxShadow: selected ? pixelShadow(color: colorInk, offset: 3) : null),
+    return Tooltip(
+      message: 'Press ${rating.value}',
       child: OutlinedButton(
         key: ValueKey('rating-${rating.name}'),
         style: style,
@@ -58,3 +63,11 @@ class RatingButtons extends StatelessWidget {
     );
   }
 }
+
+/// Number keys 1-4 for Again/Hard/Good/Easy, for wrapping a screen that
+/// shows [RatingButtons] in `CallbackShortcuts`.
+Map<ShortcutActivator, VoidCallback> ratingShortcuts(ValueChanged<ReviewRating>? onSelected) => {
+      if (onSelected != null)
+        for (final r in ReviewRating.values)
+          SingleActivator(LogicalKeyboardKey(LogicalKeyboardKey.digit1.keyId + r.value - 1)): () => onSelected(r),
+    };

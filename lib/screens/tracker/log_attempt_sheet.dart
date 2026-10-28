@@ -101,7 +101,7 @@ class _LogAttemptSheetState extends State<LogAttemptSheet> {
               decoration: const InputDecoration(labelText: 'Notes (optional)', hintText: 'What tripped you up?'),
             ),
             const SizedBox(height: 20),
-            PixelButton(label: 'Save attempt', onPressed: _save),
+            PrimaryButton(label: 'Save attempt', onPressed: _save),
           ],
         ),
       ),

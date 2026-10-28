@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/screens/tracker/problem_detail_screen.dart';
-import 'package:quizapp/screens/tracker/problem_editor_screen.dart';
-import 'package:quizapp/screens/tracker/problems_screen.dart';
-import 'package:quizapp/storage/problems_repo.dart';
-import 'package:quizapp/theme/widgets.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/screens/tracker/problem_detail_screen.dart';
+import 'package:quillfin/screens/tracker/problem_editor_screen.dart';
+import 'package:quillfin/screens/tracker/problems_screen.dart';
+import 'package:quillfin/storage/problems_repo.dart';
+import 'package:quillfin/theme/widgets.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
@@ -331,7 +331,7 @@ void main() {
         final attempt = (await repo.listAttempts(p.id)).single;
         expect((attempt.solved, attempt.rating, attempt.durationMinutes, attempt.notes), (true, ReviewRating.good, 12, 'Used a hash map'));
 
-        expect(find.text('ATTEMPTS (1)'), findsOneWidget);
+        expect(find.text('Attempts (1)'), findsOneWidget);
         expect(find.textContaining('12 min · Good'), findsOneWidget);
       });
     });

@@ -85,8 +85,8 @@ class ReminderService {
           ),
           linux: LinuxInitializationSettings(defaultActionName: 'Open'),
           windows: WindowsInitializationSettings(
-            appName: 'Quiz App AI',
-            appUserModelId: 'SavePoint.QuizAppAI',
+            appName: 'QuillFin',
+            appUserModelId: 'SavePoint.QuillFin',
             guid: '6f0f3c1e-4b9e-4a57-9a43-2f1d7c6b8e21',
           ),
         ),

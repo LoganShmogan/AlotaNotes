@@ -150,7 +150,7 @@ class _ProblemEditorScreenState extends State<ProblemEditorScreen> {
                   controller: _solution,
                   minLines: 6,
                   maxLines: null,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 14, color: colorInk),
+                  style: TextStyle(fontFamily: 'monospace', fontSize: 14, color: context.brand.ink),
                   decoration: const InputDecoration(hintText: 'Paste your code or describe the approach'),
                 ),
                 const SectionLabel('Notes'),
@@ -161,7 +161,7 @@ class _ProblemEditorScreenState extends State<ProblemEditorScreen> {
                   decoration: const InputDecoration(hintText: 'Key insight, gotchas, complexity...'),
                 ),
                 const SizedBox(height: 24),
-                PixelButton(label: _isNew ? 'Add problem' : 'Save changes', onPressed: _save),
+                PrimaryButton(label: _isNew ? 'Add problem' : 'Save changes', onPressed: _save),
               ],
             ),
     );

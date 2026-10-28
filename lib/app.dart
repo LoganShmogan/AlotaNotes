@@ -1,23 +1,48 @@
 import 'package:flutter/material.dart';
 
 import 'auth/auth_service.dart';
-import 'services/reminder_service.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/root_shell.dart';
+import 'services/reminder_service.dart';
+import 'settings/theme_controller.dart';
 import 'theme/theme.dart';
 
-class QuizApp extends StatelessWidget {
+class QuillFinApp extends StatefulWidget {
   final AuthService authService;
   final ReminderService? reminders;
-  const QuizApp({super.key, required this.authService, this.reminders});
+  final ThemeController? themeController;
+  const QuillFinApp({super.key, required this.authService, this.reminders, this.themeController});
+
+  @override
+  State<QuillFinApp> createState() => _QuillFinAppState();
+}
+
+class _QuillFinAppState extends State<QuillFinApp> {
+  late final ThemeController _theme = widget.themeController ?? ThemeController();
+  final _light = buildAppTheme();
+  final _dark = buildAppTheme(brightness: Brightness.dark);
+
+  @override
+  void initState() {
+    super.initState();
+    _theme.load();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Quiz App AI',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
-      home: _AuthGate(authService: authService, reminders: reminders),
+    return ThemeControllerScope(
+      controller: _theme,
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: _theme,
+        builder: (context, mode, _) => MaterialApp(
+          title: brandName,
+          debugShowCheckedModeBanner: false,
+          theme: _light,
+          darkTheme: _dark,
+          themeMode: mode,
+          home: _AuthGate(authService: widget.authService, reminders: widget.reminders),
+        ),
+      ),
     );
   }
 }

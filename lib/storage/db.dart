@@ -4,6 +4,8 @@
 /// default), so behavior is deterministic and easy to test.
 library;
 
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -60,7 +62,14 @@ SrsCard? srsCardFromRow(Map<String, Object?> row) {
 /// build of SQLite.
 Future<Database> openAppDatabase() async {
   // No filesystem in a browser: the web factory takes a bare name.
-  final dbPath = kIsWeb ? 'quizapp.db' : join((await getApplicationDocumentsDirectory()).path, 'quizapp.db');
+  final String dbPath;
+  if (kIsWeb) {
+    dbPath = databaseFileName;
+  } else {
+    final dir = (await getApplicationDocumentsDirectory()).path;
+    dbPath = join(dir, databaseFileName);
+    await adoptLegacyDatabaseFile(dir);
+  }
   return appDatabaseFactory().openDatabase(
     dbPath,
     options: OpenDatabaseOptions(
@@ -75,6 +84,23 @@ Future<Database> openAppDatabase() async {
       onOpen: (db) async => db.execute('PRAGMA foreign_keys = ON'),
     ),
   );
+}
+
+const databaseFileName = 'quillfin.db';
+
+/// The file name used before the app became QuillFin.
+const legacyDatabaseFileName = 'quizapp.db';
+
+/// Renames a pre-QuillFin `quizapp.db` in [dir] to [databaseFileName], so
+/// desktop users (whose documents directory didn't change with the rename)
+/// keep their notes. Does nothing if there's no old file or a new one
+/// already exists. Mobile app ids changed, so there's nothing to adopt there.
+Future<void> adoptLegacyDatabaseFile(String dir) async {
+  final legacy = File(join(dir, legacyDatabaseFileName));
+  final current = File(join(dir, databaseFileName));
+  if (await legacy.exists() && !await current.exists()) {
+    await legacy.rename(current.path);
+  }
 }
 
 /// Picks the SQLite backend for a platform. Split out of `openAppDatabase`

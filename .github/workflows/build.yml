@@ -43,14 +43,14 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuizAppAI-Windows-Setup
-          path: windows/installer_output/QuizAppAI-Windows-Setup.exe
+          name: QuillFin-Windows-Setup
+          path: windows/installer_output/QuillFin-Windows-Setup.exe
 
       - name: Upload to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: windows/installer_output/QuizAppAI-Windows-Setup.exe
+          files: windows/installer_output/QuillFin-Windows-Setup.exe
 
   # ── Linux x86_64 ─────────────────────────────────────────────────────────
   # Built on Ubuntu 22.04 for broad glibc compatibility with older distros,
@@ -84,12 +84,12 @@ jobs:
       - name: Assemble AppDir
         run: |
           set -e
-          APPDIR="QuizAppAI.AppDir"
+          APPDIR="QuillFin.AppDir"
           mkdir -p "$APPDIR/usr/bin"
           cp -r build/linux/x64/release/bundle/. "$APPDIR/usr/bin/"
           cp linux/appimage/AppRun "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
-          cp linux/appimage/quizapp.desktop "$APPDIR/quizapp.desktop"
+          cp linux/appimage/quillfin.desktop "$APPDIR/quillfin.desktop"
           cp linux/appimage/icon.png "$APPDIR/icon.png"
 
       - name: Download appimagetool
@@ -101,16 +101,16 @@ jobs:
         run: |
           # GitHub Actions runners don't have FUSE mounted, so appimagetool
           # (itself an AppImage) needs to extract-and-run rather than mount.
-          ./appimagetool --appimage-extract-and-run QuizAppAI.AppDir QuizAppAI-Linux-x86_64.AppImage
+          ./appimagetool --appimage-extract-and-run QuillFin.AppDir QuillFin-Linux-x86_64.AppImage
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuizAppAI-Linux-x86_64.AppImage
-          path: QuizAppAI-Linux-x86_64.AppImage
+          name: QuillFin-Linux-x86_64.AppImage
+          path: QuillFin-Linux-x86_64.AppImage
 
       - name: Upload to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: QuizAppAI-Linux-x86_64.AppImage
+          files: QuillFin-Linux-x86_64.AppImage

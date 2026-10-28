@@ -128,9 +128,12 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                     ),
                   ),
                 if (_question?.isManuallyEdited == true)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Align(alignment: Alignment.centerLeft, child: Pill('Manually edited', color: colorYellow)),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: tintedPill(context, 'Manually edited', context.brand.quill),
+                    ),
                   ),
                 const SizedBox(height: 16),
                 TextField(

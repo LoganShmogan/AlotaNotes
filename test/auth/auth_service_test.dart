@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/auth/auth_service.dart';
+import 'package:quillfin/auth/auth_service.dart';
 
 void main() {
   test('no one is signed in initially', () async {

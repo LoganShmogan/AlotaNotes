@@ -1,15 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/models.dart';
-import 'package:quizapp/core/scheduling.dart';
-import 'package:quizapp/services/data_export_service.dart';
-import 'package:quizapp/storage/db.dart';
-import 'package:quizapp/storage/folders_repo.dart';
-import 'package:quizapp/storage/notes_repo.dart';
-import 'package:quizapp/storage/problems_repo.dart';
-import 'package:quizapp/storage/questions_repo.dart';
-import 'package:quizapp/storage/reviews_repo.dart';
+import 'package:quillfin/core/models.dart';
+import 'package:quillfin/core/scheduling.dart';
+import 'package:quillfin/services/data_export_service.dart';
+import 'package:quillfin/storage/db.dart';
+import 'package:quillfin/storage/folders_repo.dart';
+import 'package:quillfin/storage/notes_repo.dart';
+import 'package:quillfin/storage/problems_repo.dart';
+import 'package:quillfin/storage/questions_repo.dart';
+import 'package:quillfin/storage/reviews_repo.dart';
 
 import '../helpers/test_env.dart';
 
@@ -60,7 +60,7 @@ void main() {
 
     final export = await DataExportService(db).exportFile();
     expect(export.file.mimeType, 'application/json');
-    expect(export.name, matches(RegExp(r'^quizapp-export-\d{4}-\d{2}-\d{2}T[\d-]+Z\.json$')));
+    expect(export.name, matches(RegExp(r'^quillfin-export-\d{4}-\d{2}-\d{2}T[\d-]+Z\.json$')));
 
     final text = utf8.decode(await export.file.readAsBytes());
     expect(text, contains('\n  "folders": ['));

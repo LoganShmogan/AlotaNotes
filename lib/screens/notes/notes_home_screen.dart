@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../core/models.dart';
 import '../../storage/folders_repo.dart';
+import '../../layout/breakpoints.dart';
 import '../../theme/widgets.dart';
 import 'dialogs.dart';
 import 'folder_detail_screen.dart';
@@ -45,9 +46,11 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
 
   void _openFolder(Folder folder) {
     Navigator.of(context)
-        .push(MaterialPageRoute(
-          builder: (_) => FolderDetailScreen(db: widget.db, folder: folder),
-        ))
+        .push(
+          MaterialPageRoute(
+            builder: (_) => FolderDetailScreen(db: widget.db, folder: folder),
+          ),
+        )
         .then((_) => _refresh());
   }
 
@@ -58,9 +61,13 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _folders.isEmpty
-              ? const EmptyState(icon: Icons.folder_outlined, message: 'No subjects yet. Tap + to create one.')
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+          ? const EmptyState(icon: Icons.folder_outlined, message: 'No subjects yet. Tap + to create one.')
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                // Centred at reading width on wide windows.
+                final inset = centeredInset(constraints.maxWidth, context.windowSize.gutter);
+                return ListView.builder(
+                  padding: EdgeInsets.fromLTRB(inset, 12, inset, 96),
                   itemCount: _folders.length,
                   itemBuilder: (context, index) {
                     final folder = _folders[index];
@@ -73,11 +80,10 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
                       ),
                     );
                   },
-                ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _createFolder,
-        child: const Icon(Icons.add),
-      ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(onPressed: _createFolder, child: const Icon(Icons.add)),
     );
   }
 }

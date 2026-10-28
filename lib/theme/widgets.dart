@@ -1,111 +1,110 @@
-/// Small branded building blocks the theme alone can't express: hard
-/// offset "pixel" shadows, the pressed-in button effect from
-/// savepoint.co.nz, badges, stat tiles and empty states.
+/// Small branded building blocks shared across screens: cards, the primary
+/// button, badges, stat tiles, empty states, the recall meter and the
+/// QuillFin mark. Colours always come from `context.brand`, so every
+/// widget works in light and dark mode.
 library;
 
 import 'package:flutter/material.dart';
 
 import '../core/models.dart';
-import 'theme.dart';
+import 'brand.dart';
 
-/// A white panel with an ink border and a solid offset shadow.
-class PixelCard extends StatelessWidget {
+/// A surface panel with a hairline border. [accent] draws a coloured bar
+/// down the leading edge (used to flag "due" items).
+class BrandCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color color;
-  final Color shadowColor;
+  final Color? color;
+  final Color? accent;
   final VoidCallback? onTap;
 
-  const PixelCard({
+  const BrandCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.color = colorPaperRaised,
-    this.shadowColor = colorPurple,
+    this.color,
+    this.accent,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final content = Padding(padding: padding, child: child);
-    return Container(
-      margin: const EdgeInsets.only(right: 6, bottom: 6),
-      decoration: BoxDecoration(
-        color: color,
-        border: Border.all(color: colorInk, width: borderWidth),
-        boxShadow: pixelShadow(color: shadowColor),
+    final b = context.brand;
+    Widget content = Padding(padding: padding, child: child);
+    if (accent != null) {
+      content = IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [Container(width: 4, color: accent), Expanded(child: content)],
+        ),
+      );
+    }
+    return Material(
+      color: color ?? b.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radiusCard),
+        side: BorderSide(color: color == null ? b.line : Colors.transparent),
       ),
-      // Its own Material, so ink from tiles/buttons inside paints above the
-      // decoration instead of behind it.
-      child: Material(
-        type: MaterialType.transparency,
-        child: onTap == null ? content : InkWell(onTap: onTap, child: content),
-      ),
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null ? content : InkWell(onTap: onTap, child: content),
     );
   }
 }
 
-/// The site's primary call to action: a yellow button with a 4px ink shadow
-/// that presses in (shadow shrinks, button shifts) while held.
-class PixelButton extends StatefulWidget {
+/// The main call to action on a screen: a filled fin-coloured button,
+/// optionally with a leading icon.
+class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
 
-  const PixelButton({super.key, required this.label, required this.onPressed, this.icon});
+  /// Gold instead of fin, for the single most important action on a dark
+  /// hero panel (start quiz, upgrade).
+  final bool highlight;
 
-  @override
-  State<PixelButton> createState() => _PixelButtonState();
-}
-
-class _PixelButtonState extends State<PixelButton> {
-  bool _pressed = false;
-
-  void _setPressed(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
-  }
+  const PrimaryButton({super.key, required this.label, required this.onPressed, this.icon, this.highlight = false});
 
   @override
   Widget build(BuildContext context) {
-    final enabled = widget.onPressed != null;
-    final offset = !enabled ? 0.0 : (_pressed ? 2.0 : 4.0);
-    final child = widget.icon == null
-        ? Text(widget.label)
-        : Row(mainAxisSize: MainAxisSize.min, children: [Icon(widget.icon), const SizedBox(width: 10), Text(widget.label)]);
-    return Listener(
-      onPointerDown: (_) => _setPressed(true),
-      onPointerUp: (_) => _setPressed(false),
-      onPointerCancel: (_) => _setPressed(false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        margin: const EdgeInsets.only(right: 4, bottom: 4),
-        transform: Matrix4.translationValues(4 - offset, 4 - offset, 0),
-        decoration: BoxDecoration(boxShadow: offset == 0 ? null : pixelShadow(color: colorInk, offset: offset)),
-        child: ElevatedButton(onPressed: widget.onPressed, child: child),
-      ),
-    );
+    final b = context.brand;
+    final style = highlight ? FilledButton.styleFrom(backgroundColor: b.quill, foregroundColor: b.onQuill) : null;
+    return icon == null
+        ? FilledButton(onPressed: onPressed, style: style, child: Text(label))
+        : FilledButton.icon(onPressed: onPressed, style: style, icon: Icon(icon), label: Text(label));
   }
 }
 
-/// A small square label: difficulty, status, tag.
+/// A small rounded label: difficulty, status, tag.
 class Pill extends StatelessWidget {
   final String label;
-  final Color color;
-  final Color textColor;
-  const Pill(this.label, {super.key, this.color = colorPaperTint, this.textColor = colorInk});
+  final Color? color;
+  final Color? textColor;
+  const Pill(this.label, {super.key, this.color, this.textColor});
 
   @override
   Widget build(BuildContext context) {
+    final b = context.brand;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color, border: Border.all(color: colorInk, width: 2)),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(color: color ?? b.surfaceTint, borderRadius: BorderRadius.circular(radiusPill)),
       child: Text(
         label,
-        style: TextStyle(fontFamily: fontDisplay, fontSize: 12, fontWeight: FontWeight.w700, color: textColor, height: 1.3),
+        style: TextStyle(
+          fontFamily: fontDisplay,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textColor ?? b.ink,
+          height: 1.3,
+        ),
       ),
     );
   }
 }
+
+/// A [Pill] tinted from [base]: a light wash of the colour, with text mixed
+/// towards ink so it stays readable in both themes.
+Pill tintedPill(BuildContext context, String label, Color base) =>
+    Pill(label, color: base.withValues(alpha: 0.16), textColor: Color.lerp(base, context.brand.ink, 0.3));
 
 class DifficultyPill extends StatelessWidget {
   final String difficulty;
@@ -113,10 +112,11 @@ class DifficultyPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = context.brand;
     return switch (difficulty) {
-      problemDifficultyEasy => const Pill('Easy', color: colorGreen),
-      problemDifficultyHard => const Pill('Hard', color: colorPurpleDeep, textColor: colorOnPlum),
-      _ => const Pill('Medium', color: colorYellow),
+      problemDifficultyEasy => tintedPill(context, 'Easy', b.success),
+      problemDifficultyHard => tintedPill(context, 'Hard', b.danger),
+      _ => tintedPill(context, 'Medium', b.quill),
     };
   }
 }
@@ -127,31 +127,33 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = context.brand;
     return switch (status) {
       ProblemStatus.todo => const Pill('To do'),
-      ProblemStatus.attempted => const Pill('Attempted', color: colorBlue),
-      ProblemStatus.solved => const Pill('Solved', color: colorGreen),
+      ProblemStatus.attempted => tintedPill(context, 'Attempted', b.info),
+      ProblemStatus.solved => tintedPill(context, 'Solved', b.success),
     };
   }
 }
 
-/// A headline number with a label under it, for the Today dashboard.
+/// A headline number with an icon and a label, for the Today dashboard.
 class StatTile extends StatelessWidget {
   final String label;
   final String value;
-  final Color accent;
-  const StatTile({super.key, required this.label, required this.value, this.accent = colorPurple});
+  final IconData icon;
+  final Color? accent;
+  const StatTile({super.key, required this.label, required this.value, required this.icon, this.accent});
 
   @override
   Widget build(BuildContext context) {
-    return PixelCard(
-      shadowColor: accent,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    return BrandCard(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 2),
+          Icon(icon, size: 20, color: accent ?? context.brand.fin),
+          const SizedBox(height: 8),
+          Text(value, style: Theme.of(context).textTheme.headlineSmall),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -159,24 +161,33 @@ class StatTile extends StatelessWidget {
   }
 }
 
-/// Uppercase section label, like the site's eyebrow text.
+/// Small heading above a group of content, with an optional trailing
+/// action.
 class SectionLabel extends StatelessWidget {
   final String text;
-  const SectionLabel(this.text, {super.key});
+  final Widget? trailing;
+  const SectionLabel(this.text, {super.key, this.trailing});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 20, 4, 8),
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          fontFamily: fontDisplay,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-          color: colorPurpleDeep,
-        ),
+      padding: const EdgeInsets.fromLTRB(2, 22, 2, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontFamily: fontDisplay,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+                color: context.brand.inkSoft,
+              ),
+            ),
+          ),
+          ?trailing,
+        ],
       ),
     );
   }
@@ -190,25 +201,25 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = context.brand;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: colorPaperTint,
-                border: Border.all(color: colorInk, width: borderWidth),
-                boxShadow: pixelShadow(offset: 4),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: b.surfaceTint, shape: BoxShape.circle),
+                child: Icon(icon, size: 30, color: b.fin),
               ),
-              child: Icon(icon, size: 32, color: colorPurpleDeep),
-            ),
-            const SizedBox(height: 18),
-            Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
-            if (action != null) ...[const SizedBox(height: 18), action!],
-          ],
+              const SizedBox(height: 18),
+              Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+              if (action != null) ...[const SizedBox(height: 18), action!],
+            ],
+          ),
         ),
       ),
     );
@@ -223,19 +234,106 @@ class RetentionMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = value >= 0.85 ? colorGreen : (value >= 0.7 ? colorYellow : colorPurple);
+    final b = context.brand;
+    final color = value >= 0.85 ? b.success : (value >= 0.7 ? b.quill : b.danger);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 48,
-          height: 10,
-          decoration: BoxDecoration(color: colorPaperTint, border: Border.all(color: colorInk, width: 1.5)),
-          alignment: Alignment.centerLeft,
-          child: FractionallySizedBox(widthFactor: value.clamp(0, 1), child: Container(color: color)),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(radiusPill),
+          child: Container(
+            width: 48,
+            height: 6,
+            color: b.surfaceTint,
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(widthFactor: value.clamp(0, 1), child: Container(color: color)),
+          ),
         ),
         const SizedBox(width: 6),
         Text('${(value * 100).round()}%', style: Theme.of(context).textTheme.bodySmall),
+      ],
+    );
+  }
+}
+
+/// The placeholder QuillFin mark: a quill nib whose feather sweeps into a
+/// fin. Drawn in code (same geometry as assets/brand/quillfin-mark.svg) so
+/// it stays crisp at any size without an SVG dependency.
+class QuillFinMark extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const QuillFinMark({super.key, this.size = 32, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(size: Size.square(size), painter: MarkPainter(color ?? context.brand.fin));
+  }
+}
+
+@visibleForTesting
+class MarkPainter extends CustomPainter {
+  final Color color;
+  MarkPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Designed on a 64-unit grid.
+    canvas.scale(size.width / 64, size.height / 64);
+    final feather = Path()
+      ..moveTo(12, 54)
+      ..cubicTo(12, 32, 28, 12, 54, 8)
+      ..cubicTo(52, 22, 46, 32, 36, 38)
+      ..lineTo(42, 40)
+      ..cubicTo(34, 48, 24, 52, 12, 54)
+      ..close();
+    canvas.drawPath(feather, Paint()..color = color);
+    // The shaft: a cut from the nib up into the feather.
+    final shaft = Paint()
+      ..color = color
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(const Offset(8, 58), const Offset(30, 36), shaft);
+  }
+
+  @override
+  bool shouldRepaint(MarkPainter oldDelegate) => oldDelegate.color != color;
+}
+
+/// Mark plus wordmark, for headers, the sidebar and the sign-in screen.
+class BrandLockup extends StatelessWidget {
+  final double size;
+  final bool showOwner;
+  final Color? color;
+  const BrandLockup({super.key, this.size = 28, this.showOwner = false, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = context.brand;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        QuillFinMark(size: size * 1.1, color: color),
+        SizedBox(width: size * 0.35),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              brandName,
+              style: TextStyle(
+                fontFamily: fontDisplay,
+                fontSize: size,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+                color: color ?? b.ink,
+                height: 1.05,
+              ),
+            ),
+            if (showOwner)
+              Text('by $brandOwner', style: TextStyle(fontSize: size * 0.42, color: color ?? b.inkSoft, height: 1.3)),
+          ],
+        ),
       ],
     );
   }

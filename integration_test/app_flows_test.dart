@@ -29,8 +29,8 @@ import 'package:share_plus_platform_interface/share_plus_platform_interface.dart
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:quizapp/main.dart' as app;
-import 'package:quizapp/storage/db.dart';
+import 'package:quillfin/main.dart' as app;
+import 'package:quillfin/storage/db.dart';
 
 const _apiKeyStorageKey = 'ai_api_key';
 const _settingsKey = 'app_settings';
@@ -225,7 +225,7 @@ void main() {
     await waitFor(tester, find.text('All caught up')); // the Today tab
 
     // The real openAppDatabase() created its file under the documents dir.
-    final dbFile = File(p.join(documentsDir.path, 'quizapp.db'));
+    final dbFile = File(p.join(documentsDir.path, 'quillfin.db'));
     expect(dbFile.existsSync(), isTrue);
 
     // --- Point the AI provider at the local fake server ------------------

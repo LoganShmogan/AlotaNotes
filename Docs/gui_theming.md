@@ -1,69 +1,64 @@
 # Visual Theming
 
-`lib/theme/theme.dart` is the single source of truth for the app's look;
-`lib/theme/widgets.dart` holds the few branded building blocks a
-`ThemeData` can't express. Screens use the named constants and widgets,
-never raw hex codes.
+QuillFin's real logo, colours and fonts are still to come. Until then a
+placeholder identity lives in **one token file**,
+`lib/theme/brand.dart`, so the real brand is a token swap. Everything else
+reads colours through `context.brand`, so light and dark mode both follow
+from that file.
 
-## Source
+- `lib/theme/brand.dart`: the name, fonts, radii and the light and dark
+  `BrandPalette`s (exposed as the `BrandColors` theme extension).
+- `lib/theme/theme.dart`: builds the light and dark `ThemeData` from the
+  palette.
+- `lib/theme/widgets.dart`: shared branded widgets.
+- `lib/layout/breakpoints.dart`: window size classes and the layout helpers
+  (see the per-screen layouts in `quillfin_plan.md` section 5).
 
-The tokens are taken directly from the live savepoint.co.nz stylesheet
-(its CSS custom properties, fetched in October 2026), not guessed. The site
-is a light, "neo-brutalist" retro design:
+## Palette (placeholder)
 
-| Constant | Hex | Site token | Used for |
+| Token | Light | Dark | Use |
 |---|---|---|---|
-| `colorPaper` | `#F7F4EF` | `--paper` | Page background |
-| `colorPaperRaised` | `#FFFFFF` | `--paper-raised` | Cards, inputs |
-| `colorPaperTint` | `#EFE8F2` | `--paper-tint` | Quiet fills, tracks, dividers |
-| `colorInk` | `#221C27` | `--ink` | Text, 3px borders, button shadows |
-| `colorInkSoft` | `#4A4352` | `--ink-soft` | Secondary text |
-| `colorPlum` | `#2B2233` | `--plum` | App bar, nav bar, hero panels |
-| `colorOnPlumSoft` | `#E4DCEA` | `--on-plum-soft` | Secondary text on plum |
-| `colorPurple` | `#B791C2` | `--purple` | Pixel shadows, app-bar underline |
-| `colorPurpleDeep` | `#5B3D6B` | `--purple-deep` | Primary accent, links, labels |
-| `colorYellow` | `#EECC67` | `--yellow` | Primary buttons, selection, "due" |
-| `colorBlue` | `#699FD5` | `--blue` | "Attempted", problem stats |
-| `colorGreen` | `#82C88A` | `--green` | "Solved", easy, correct answers |
-| `colorDanger` | `#B3261E` | (none) | Errors, wrong answers |
+| `ink` | `#12212E` | `#E8EEF2` | text |
+| `inkSoft` | `#4C5C69` | `#A9B6C0` | secondary text, icons |
+| `paper` | `#F7F6F2` | `#0D1821` | page background |
+| `surface` | `#FFFFFF` | `#15232F` | cards, sheets, inputs |
+| `surfaceTint` | `#EEF3F2` | `#1C2E3B` | quiet fills, selection |
+| `line` | `#DCE3E4` | `#2A3D4B` | hairline borders |
+| `fin` | `#0F8A7E` | `#3CC3B3` | primary: buttons, links, selection |
+| `deep` | `#0E3B4F` | `#123447` | hero panels, sign-in brand panel |
+| `quill` | `#F2B33D` | `#F5C561` | highlight: "due", the key call to action |
+| `success` / `info` / `danger` | `#2F9E5C` / `#3B78C4` / `#C2412D` | `#6DD69A` / `#8AB8F0` / `#FF8A73` | status |
 
-`colorDanger` is the only colour not on the site, which never shows an
-error state.
+If a theme wasn't built by `buildAppTheme` (a bare `MaterialApp` in a
+widget test), `context.brand` falls back to the palette matching the
+theme's brightness.
 
-## Shape and depth
+## Type and shape
 
-- Square corners everywhere, with 3px ink borders (`inkBorder`).
-- No blurred elevation. Depth is a solid offset "pixel shadow"
-  (`pixelShadow()`, the site's `--pixel-shadow: 6px 6px 0 var(--purple)`).
-- The app bar is plum with a 4px purple underline and the nav bar is plum
-  with a yellow selected tab, like the site's header.
-- Primary actions use `PixelButton`: yellow, ink border, 4px ink shadow,
-  pressing in to 2px while held (the site's `button:hover` effect).
-- `PixelCard` is a white panel with an ink border and an offset shadow. It
-  wraps its content in a transparent `Material` so ink from tiles inside
-  paints correctly. The shadow colour carries meaning: a yellow shadow on a
-  tracker card means it's due.
+- **Outfit** (Medium, SemiBold, Bold) for headings, numbers, buttons and
+  labels; **Inter** (Regular to Bold) for body text. Both are SIL OFL and
+  bundled in `assets/fonts/`, so nothing is fetched at runtime.
+- Problem solutions use the platform `monospace` font.
+- Shape: 14 px card radius, 12 px controls, 1 px hairline borders, no
+  heavy shadows.
 
-## Fonts
+## Mark
 
-Bundled in `assets/fonts/` (SIL OFL, licences alongside), so text never
-depends on a network fetch:
-
-- **Chakra Petch** (SemiBold, Bold): headings, app-bar titles, buttons,
-  chips, pills and section labels (`fontDisplay`).
-- **Figtree** (Regular, Medium, SemiBold, Bold): body text (`fontBody`, the
-  theme default).
-
-Code (problem solutions) uses the platform `monospace` family.
+`QuillFinMark` draws the placeholder mark (a quill nib whose feather sweeps
+into a fin) in code. The same geometry is in
+`assets/brand/quillfin-mark.svg`, and `assets/brand/quillfin-app-icon.svg`
+is a placeholder app icon. `BrandLockup` is the mark plus the wordmark, with
+an optional "by Save Point".
 
 ## Widgets in `widgets.dart`
 
-`PixelCard`, `PixelButton`, `Pill`, `DifficultyPill`, `StatusPill`,
-`StatTile`, `SectionLabel` (uppercase eyebrow text), `EmptyState`,
-`RetentionMeter`.
+- `BrandCard`, with an optional leading accent bar used to flag due items.
+- `PrimaryButton`, with a `highlight` variant in gold.
+- `Pill`, `tintedPill()`, `DifficultyPill` and `StatusPill`.
+- `StatTile`, `SectionLabel`, `EmptyState` and `RetentionMeter`.
+- `QuillFinMark` and `BrandLockup`.
 
-## Adding a style
+## Light and dark
 
-Add it to `buildAppTheme()` using the constants above, or add a small
-widget to `widgets.dart` if it needs pixel shadows. Don't hardcode hex
-codes in screens. There is no dark mode, matching the site.
+The theme follows the system, with an override in Settings > Appearance
+(`ThemeController`, saved as `AppSettings.themeMode`).

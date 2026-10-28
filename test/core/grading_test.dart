@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quizapp/core/grading.dart';
+import 'package:quillfin/core/grading.dart';
 
 void main() {
   test('exact match after normalizing case/punctuation/whitespace', () {
