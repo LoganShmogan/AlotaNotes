@@ -16,12 +16,13 @@ flutter test integration_test -d linux
 ```
 
 `integration_test/app_flows_test.dart` builds and launches the real app on
-Linux desktop and drives one full session through the UI: wrong then right
-sign-in, AI provider setup on the Account tab, creating a subject and a
+Linux desktop and drives one full session through the UI, laid out at
+phone size: "Continue on this device" (the test build has no cloud config),
+AI provider setup on the Account tab, creating a subject and a
 note, generating questions, editing one, bulk importing two files, taking
 the quiz (one right, one wrong answer), changing the default question
 format, exporting, then signing out and back in to check everything
-persisted.
+persisted. It passes on the dev machine as of 2026-10-28.
 
 What's real and what isn't:
 
@@ -35,8 +36,8 @@ What's real and what isn't:
   app's documents directory is `~/Documents` and the test must never touch
   your real `quillfin.db`. The file picker and share sheet are native OS
   dialogs a test can't click, so they're faked at their platform interface.
-- **Restored**: the API key and settings you had before the run are put
-  back afterwards.
+- **Restored**: the API key, the saved session and the settings you had
+  before the run are put back afterwards.
 - **No shortcuts on scheduling**: new questions are due straight away
   under FSRS, so the quiz runs on the real due dates. The test rates one
   answer Again and overrides the other's suggested Good with Easy, then
@@ -51,6 +52,27 @@ sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
 
 Nothing here counts towards the coverage number above; `flutter test
 --coverage` only runs `test/`.
+
+## Live sync check
+
+`test/sync/convex_live_test.dart` runs sync between two "devices" and two
+accounts against a **real** Convex deployment, and checks a real
+`billing:me` and a real backend error. It's skipped unless you point it at
+one:
+
+```bash
+QUILLFIN_LIVE_CONVEX_URL=http://127.0.0.1:3210 \
+QUILLFIN_LIVE_TOKEN_A=<ID token> QUILLFIN_LIVE_TOKEN_B=<ID token for another user> \
+flutter test test/sync/convex_live_test.dart
+```
+
+The deployment has to accept the tokens. Without Clerk, the local anonymous
+deployment (`backend.md`) can trust a throwaway OIDC issuer: serve an
+`/.well-known/openid-configuration` and a JWKS from `http://127.0.0.1:<port>`,
+set `CLERK_JWT_ISSUER_DOMAIN` to that URL and `CLERK_OAUTH_CLIENT_ID` to the
+tokens' `aud`, and sign RS256 ID tokens with its key. That's how this was
+first checked, on 2026-10-28: all three tests passed against the real
+backend.
 
 ## Coverage
 
@@ -81,7 +103,10 @@ integration_test/
 test/
 ├── helpers/
 │   ├── test_env.dart                  # shared DB setup, plugin fakes, async polling helpers
-│   └── fake_notifications.dart        # notification plugin fakes (Android/iOS/macOS)
+│   ├── fake_notifications.dart        # notification plugin fakes (Android/iOS/macOS)
+│   ├── fake_convex.dart               # in-memory Convex backend behind its HTTP API
+│   ├── fake_auth.dart                 # sessions, JWTs, a scripted OAuth browser
+│   └── fake_url_launcher.dart
 ├── core/
 │   ├── scheduling_test.dart           # FSRS wrapper: steps, lapses, previews, recall, legacy cards
 │   ├── reminders_test.dart            # reminder planning, pure
@@ -94,7 +119,12 @@ test/
 │   ├── openai_provider_test.dart      # HTTP mocked via http's MockClient
 │   └── anthropic_provider_test.dart
 ├── auth/
-│   └── auth_service_test.dart
+│   ├── auth_service_test.dart         # device-only and account sessions, refresh, cancel
+│   └── clerk_oauth_test.dart          # PKCE, token exchange, loopback and deep-link browsers
+├── sync/
+│   ├── sync_store_test.dart           # triggers, v2 -> v3 migration, push batches, pulls
+│   ├── sync_service_test.dart         # two devices via FakeConvex, scheduling, ConvexClient
+│   └── convex_live_test.dart          # against a real Convex deployment; skipped by default
 ├── settings/
 │   └── app_settings_test.dart         # in-memory shared_preferences
 ├── storage/
@@ -106,7 +136,8 @@ test/
 │   ├── data_export_service_test.dart
 │   └── reminder_service_test.dart     # scheduled vs while-open delivery, fake plugin
 └── screens/                           # real widget trees, tester.tap()
-    ├── app_shell_test.dart            # main(), auth gate, login, RootShell tabs, Account
+    ├── app_shell_test.dart            # main(), auth gate, sign-in, RootShell tabs, Account
+    ├── cloud_screens_test.dart        # signed in: sync, Settings > Sync / Plan, sign-out, AI
     ├── notes_home_screen_test.dart
     ├── folder_detail_screen_test.dart
     ├── bulk_import_staging_screen_test.dart
@@ -239,15 +270,8 @@ supposed to.
 - **Native dialogs.** The file picker and share sheet are faked even in the
   integration test, so opening and dismissing the real OS dialogs is still
   only checked by hand.
-- **The integration test doesn't pass on the current dev machine.** Two
-  things, neither specific to the app:
-  - The Linux build fails to link (`cannot find -lstdc++`) because clang
-    picks GCC 14, whose `libstdc++` dev package isn't installed. Either
-    `sudo apt install libstdc++-14-dev`, or build against GCC 13:
-    `CXXFLAGS=--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/13`
-    (same for `CFLAGS` and `LDFLAGS`), after deleting `build/linux`.
-  - Once built, the second `enterText` into the login password field
-    doesn't land, so the test stops at sign-in. This also happens with the
-    test as it was before FSRS and the problem tracker (checked on commit
-    28ed50d), so it's a problem with this desktop's text input, not a
-    regression. The same sign-in sequence passes as a widget test.
+- **Real Clerk sign-in.** The OAuth flow is tested against a scripted
+  browser and a mocked token endpoint. The first run against a real Clerk
+  instance is a step in `setup_guide.md`.
+- **Real Stripe Checkout.** The Plan screen is tested against FakeConvex,
+  and the backend's Stripe calls against a mocked SDK.

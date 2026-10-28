@@ -160,7 +160,9 @@ class _ProblemsScreenState extends State<ProblemsScreen> {
             ),
       floatingActionButton: _problems.isEmpty
           ? null
-          : FloatingActionButton(onPressed: _add, tooltip: 'Add problem', child: const Icon(Icons.add)),
+          // No hero: every tab stays built in the shell, and two FABs with the
+          // default hero tag break any page transition.
+          : FloatingActionButton(heroTag: null, onPressed: _add, tooltip: 'Add problem', child: const Icon(Icons.add)),
     );
   }
 

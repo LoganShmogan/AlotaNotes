@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:quillfin/core/models.dart';
 import 'package:quillfin/core/scheduling.dart';
 import 'package:quillfin/screens/tracker/problem_detail_screen.dart';
@@ -9,24 +8,10 @@ import 'package:quillfin/screens/tracker/problems_screen.dart';
 import 'package:quillfin/storage/problems_repo.dart';
 import 'package:quillfin/theme/widgets.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
+import '../helpers/fake_url_launcher.dart';
 import '../helpers/test_env.dart';
-
-class FakeUrlLauncher extends UrlLauncherPlatform with MockPlatformInterfaceMixin {
-  final launched = <String>[];
-  bool succeed = true;
-
-  @override
-  LinkDelegate? get linkDelegate => null;
-
-  @override
-  Future<bool> launchUrl(String url, LaunchOptions options) async {
-    launched.add(url);
-    return succeed;
-  }
-}
 
 void main() {
   setUpTestEnv();

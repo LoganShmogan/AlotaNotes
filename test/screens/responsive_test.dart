@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quillfin/auth/auth_service.dart';
 import 'package:quillfin/core/models.dart';
 import 'package:quillfin/screens/login/login_screen.dart';
 import 'package:quillfin/screens/notes/folder_detail_screen.dart';
@@ -26,6 +25,7 @@ import 'package:quillfin/storage/reviews_repo.dart';
 import 'package:quillfin/theme/widgets.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../helpers/fake_auth.dart';
 import '../helpers/test_env.dart';
 
 const phone = Size(400, 820);
@@ -39,11 +39,6 @@ void setSize(WidgetTester tester, Size size) {
   addTearDown(tester.view.reset);
 }
 
-Future<HardcodedAuthService> signedIn() async {
-  final auth = HardcodedAuthService();
-  await auth.login('admin', '1234');
-  return auth;
-}
 
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -54,7 +49,7 @@ void main() {
   group('RootShell navigation', () {
     Future<void> show(WidgetTester tester, Size size) async {
       setSize(tester, size);
-      await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedIn())));
+      await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedInLocally())));
       await waitForLoad(tester);
     }
 
@@ -112,9 +107,9 @@ void main() {
 
   testWidgets('sign-in on a wide window splits brand panel and form', (tester) async {
     setSize(tester, desktop);
-    await tester.pumpWidget(MaterialApp(home: LoginScreen(authService: HardcodedAuthService())));
+    await tester.pumpWidget(MaterialApp(home: LoginScreen(authService: localAuth())));
     expect(find.textContaining('right before you would forget it'), findsOneWidget);
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Welcome to QuillFin'), findsOneWidget);
     expect(find.byType(BrandLockup), findsOneWidget); // on the brand panel only
   });
 

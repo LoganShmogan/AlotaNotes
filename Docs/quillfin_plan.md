@@ -275,7 +275,6 @@ Still open from §5 (not blocking the next phases):
 - `Ctrl/⌘+N` and `Ctrl/⌘+K` (new note, search).
 - Screenshot (golden) tests at each width. Layout is asserted with widget
   tests instead.
-- Account still uses the local admin/1234 sign-in until Phase 3.
 
 **Phase 2 (Convex backend): done, 2026-10-28.** See `backend.md`.
 
@@ -303,4 +302,40 @@ Deferred from Phase 2:
   Phase 5 with the rest of the store requirements.
 - Web-app read indexes move to Phase 4.
 
-**Next: Phase 3, Flutter accounts and sync.**
+**Phase 3 (Flutter accounts and sync): done, 2026-10-28.** See
+`accounts_and_sync.md`.
+
+- **Sign-in**: Clerk OAuth with PKCE through the system browser: a deep link
+  on Android and iOS, a loopback listener on desktop. Tokens are kept in
+  secure storage and the ID token is refreshed before it expires.
+  "Continue on this device" stays, and is the only option in builds
+  without cloud config and on the web build.
+  - This replaces `flutter_web_auth_2` from §2, whose desktop support needs
+    an embedded web view (and WebKitGTK on Linux). Doing the browser step
+    in-house needs only `app_links` and `url_launcher`.
+- **Local schema v3**: `uid`, `sync_updated_at` and `dirty` on every synced
+  table, kept by SQLite triggers (including tombstones for cascades), so
+  the repos are unchanged.
+- **Sync engine**: push in batches of 200, then pull in pages. Newer dirty
+  local rows win, children wait for their parents, and switching accounts
+  re-sends everything. It runs on open, on resume, every 5 minutes, and
+  within about 10 s of a change.
+- **Settings > Sync and > Plan**, sign-out (keep or delete this device's
+  copy), and generation on QuillFin's AI when signed in without a key.
+  Upgrading is hidden on iOS.
+- **Tests**: 394, 100% line coverage of `lib/`. There's also an opt-in live
+  test that synced two devices through the real Convex backend, and the
+  Linux integration test passes again.
+- **Fixes found on the way**:
+  - two FABs in the shell shared a hero tag, breaking page transitions;
+  - the macOS release build had no network entitlement;
+  - the integration test hadn't been updated for Phase 1's desktop window
+    size.
+
+Still open from Phase 3:
+
+- Checks that need real accounts, listed in `setup_guide.md` §6: real
+  Clerk sign-in, refresh, and Stripe test checkout.
+- Notes pushed mid-edit aren't merged: last writer wins per row (§3).
+
+**Next: Phase 4, the Next.js web app.**

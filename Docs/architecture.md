@@ -80,9 +80,18 @@ screen, since it's a secret and `shared_preferences` isn't encrypted.
   them to `flutter_local_notifications`, scheduled ahead on
   Android/iOS/macOS and shown while open on Linux/Windows.
 
-**`auth/`**: `AuthService` abstraction. `HardcodedAuthService` is the only
-implementation right now (a single local admin/1234 session); see
-`future_work.md` for why and what replaces it later.
+**`auth/`**: `AuthService` and its one implementation,
+`QuillFinAuthService`: a QuillFin account (Clerk, OAuth with PKCE through
+the system browser, in `clerk_oauth.dart` and `browser_auth.dart`) or a
+device-only session.
+
+**`sync/`**: offline-first sync with the Convex backend. `sync_store.dart`
+holds the local half (dirty rows out, pulled rows in), `sync_service.dart`
+the engine and its schedule, and `convex_client.dart` Convex's HTTP API.
+`cloud_session.dart` holds the signed-in session, `CloudScope` and the plan.
+See `accounts_and_sync.md`.
+
+**`config/`**: `CloudConfig`, the build-time Clerk and Convex settings.
 
 **`screens/`**: the actual widgets, organized by tab (`today/`, `notes/`,
 `tracker/`, `quiz/`, `account/`, `settings/`, `login/`, and `review/` for

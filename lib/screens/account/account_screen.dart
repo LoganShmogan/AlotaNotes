@@ -6,16 +6,16 @@ import '../../auth/auth_service.dart';
 import '../../layout/breakpoints.dart';
 import '../../services/reminder_service.dart';
 import '../../settings/app_settings.dart';
+import '../../sync/cloud_session.dart';
 import '../../theme/widgets.dart';
 import '../login/login_screen.dart';
 
 const _apiKeyStorageKey = 'ai_api_key';
 
-/// "Manage your connections" -- AI provider + model + API key today;
-/// cloud-storage (Dropbox/Drive/OneNote) OAuth connections are a later
-/// slice. No real login system yet (see auth/auth_service.dart) -- this is
-/// not a SavePoint account, just where the local admin session and AI
-/// connection live.
+/// The QuillFin account (or device-only session) and the AI connection:
+/// provider, model and your own API key. Signed in without a key, question
+/// generation uses QuillFin's AI within your plan (Settings > Plan).
+/// Cloud-storage (Dropbox/Drive/OneNote) connections are a later slice.
 class AccountScreen extends StatefulWidget {
   final AuthService authService;
   final ReminderService? reminders;
@@ -75,8 +75,42 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() => _saved = true);
   }
 
-  Future<void> _logout() async {
-    await widget.authService.logout();
+  /// Signing out of an account first pushes what it can, then asks whether
+  /// to keep this device's copy. A device-only session just goes back to
+  /// the sign-in choices.
+  Future<void> _signOut() async {
+    final session = CloudScope.maybeOf(context);
+    if (session != null) {
+      final choice = await showDialog<_SignOutChoice>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Sign out?'),
+          content: const Text(
+            'Your notes and problems stay in your account. You can keep a copy on this device, '
+            "which won't sync until you sign in again, or delete it from this device.",
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _SignOutChoice.delete),
+              child: const Text('Delete from this device'),
+            ),
+            FilledButton(onPressed: () => Navigator.pop(context, _SignOutChoice.keep), child: const Text('Keep a copy')),
+          ],
+        ),
+      );
+      if (choice == null) return;
+      // Best effort: whatever doesn't reach the server in time stays local.
+      await session.sync.syncNow().timeout(const Duration(seconds: 15), onTimeout: () {});
+      if (choice == _SignOutChoice.delete) await session.sync.store.deleteLocalData();
+    }
+    await _leave();
+  }
+
+  Future<void> _signInToSync() => _leave();
+
+  Future<void> _leave() async {
+    await widget.authService.signOut();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
@@ -109,9 +143,18 @@ class _AccountScreenState extends State<AccountScreen> {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.account_circle),
-                    title: Text(_user?.username ?? '...'),
-                    subtitle: const Text('Local device account'),
+                    title: Text(_user?.displayName ?? '...'),
+                    subtitle: Text(
+                      _user == null || _user!.isLocal
+                          ? 'Not signed in: everything stays on this device'
+                          : _user!.email ?? 'QuillFin account',
+                    ),
                   ),
+                  if (_user != null && _user!.isLocal && widget.authService.cloudAvailable)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: PrimaryButton(label: 'Sign in to sync', onPressed: _signInToSync),
+                    ),
                   const Divider(height: 32),
                   const SectionLabel('AI provider'),
                   DropdownButtonFormField<String>(
@@ -137,7 +180,12 @@ class _AccountScreenState extends State<AccountScreen> {
                   TextField(
                     controller: _apiKeyController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'API key'),
+                    decoration: InputDecoration(
+                      labelText: 'API key',
+                      helperText: CloudScope.maybeOf(context) == null
+                          ? null
+                          : "Optional: without one, QuillFin's AI is used, within your plan.",
+                    ),
                     onChanged: (_) => setState(() => _saved = false),
                   ),
                   const SizedBox(height: 12),
@@ -148,10 +196,12 @@ class _AccountScreenState extends State<AccountScreen> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 32),
-                  OutlinedButton(onPressed: _logout, child: const Text('Log out')),
+                  OutlinedButton(onPressed: _signOut, child: const Text('Sign out')),
                 ],
               ),
             ),
     );
   }
 }
+
+enum _SignOutChoice { keep, delete }

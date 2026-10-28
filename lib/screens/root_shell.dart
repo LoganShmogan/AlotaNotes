@@ -6,6 +6,8 @@ import '../auth/auth_service.dart';
 import '../layout/breakpoints.dart';
 import '../services/reminder_service.dart';
 import '../storage/db.dart';
+import '../sync/cloud_session.dart';
+import '../sync/sync_service.dart';
 import '../theme/theme.dart';
 import '../theme/widgets.dart';
 import 'account/account_screen.dart';
@@ -66,19 +68,41 @@ class _RootShellState extends State<RootShell> {
   Database? _db;
   late final ReminderService _reminders = widget.reminders ?? ReminderService(delivery: ReminderDelivery.none);
   final _studyVersion = ValueNotifier(0);
+  CloudSession? _cloud;
+  // Where the session is published: the app's CloudScope, or (when the
+  // shell runs without one, as in some tests) a scope of its own.
+  CloudSessionHolder? _holder;
+  final _ownHolder = CloudSessionHolder();
 
   @override
   void initState() {
     super.initState();
-    openAppDatabase().then((db) {
-      if (!mounted) return;
-      setState(() => _db = db);
-      _reminders.trySync(db);
+    _open();
+  }
+
+  Future<void> _open() async {
+    final db = await openAppDatabase();
+    final user = await widget.authService.currentUser();
+    if (!mounted) return;
+    final client = user == null || user.isLocal ? null : widget.authService.convexClient();
+    _holder = CloudScope.holderOf(context) ?? _ownHolder;
+    setState(() {
+      _db = db;
+      if (client != null) {
+        final sync = SyncService(db: db, client: client, userId: user!.id, onRemoteChanges: _studyChanged);
+        _cloud = CloudSession(user: user, client: client, sync: sync);
+        _holder!.value = _cloud;
+        sync.start();
+      }
     });
+    _reminders.trySync(db);
   }
 
   @override
   void dispose() {
+    if (_cloud != null) _holder?.clearLater(_cloud!);
+    _cloud?.sync.dispose();
+    _ownHolder.dispose();
     _studyVersion.dispose();
     _reminders.dispose();
     super.dispose();
@@ -137,7 +161,7 @@ class _RootShellState extends State<RootShell> {
 
     final tabs = [
       TodayScreen(db: _db!, refresh: _studyVersion, onChanged: _studyChanged),
-      NotesHomeScreen(db: _db!),
+      NotesHomeScreen(db: _db!, refresh: _studyVersion),
       ProblemsScreen(db: _db!, refresh: _studyVersion, onChanged: _studyChanged),
       AccountScreen(authService: widget.authService, reminders: widget.reminders),
       SettingsScreen(db: _db!, reminders: _reminders),
@@ -202,6 +226,7 @@ class _RootShellState extends State<RootShell> {
       );
     }
 
-    return CallbackShortcuts(bindings: _shortcuts, child: Focus(autofocus: true, child: shell));
+    final content = CallbackShortcuts(bindings: _shortcuts, child: Focus(autofocus: true, child: shell));
+    return _holder == _ownHolder ? CloudScope(notifier: _ownHolder, child: content) : content;
   }
 }

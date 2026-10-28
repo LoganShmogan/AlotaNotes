@@ -52,3 +52,7 @@ node_modules/
 .env.local
 .env*.local
 /backend/coverage/
+
+# Build config with real (publishable) values; see config/example.json
+/config/*.json
+!/config/example.json

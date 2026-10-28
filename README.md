@@ -12,10 +12,11 @@ This is a from-scratch Flutter rewrite of an earlier Python/Tkinter desktop app
 where useful, its algorithms ported to Dart), not its code. See
 `Docs/architecture.md` for how the two relate.
 
-- **Local-only for now.** No backend, no real accounts. Sign-in is a single
-  hardcoded local session (`admin` / `1234`) behind a swappable interface,
-  meant to be replaced by a real auth provider later without touching any
-  screen (see `Docs/future_work.md`).
+- **Optional accounts and sync.** Sign in to a QuillFin account to sync
+  notes, questions and problems across devices, offline-first, and use
+  QuillFin's AI within your plan. Or continue on this device with no account
+  at all. Builds without cloud config are device-only (see
+  `Docs/accounts_and_sync.md`).
 - **Bring your own AI key.** Connect OpenAI (or any OpenAI-compatible
   endpoint: OpenRouter, Groq, a local Ollama/LM Studio server) or Anthropic
   directly from the Account tab. The app itself is never billed.
@@ -41,8 +42,8 @@ where useful, its algorithms ported to Dart), not its code. See
 QuillFin is moving to accounts (Clerk), sync (Convex) and a Pro plan
 (Stripe), with a Next.js web app alongside this Flutter app. The plan,
 including per-screen-size layouts, is in `Docs/quillfin_plan.md`. The
-Convex backend is in `backend/` (see `Docs/backend.md`); the apps don't use
-it yet.
+Convex backend is in `backend/` (see `Docs/backend.md`), and this app syncs
+with it when signed in.
 
 ## Quick start
 
@@ -65,9 +66,10 @@ flutter analyze
 flutter test
 ```
 
-318 tests covering pure logic (scheduling, grading, text extraction), storage
+394 tests covering pure logic (scheduling, grading, text extraction), storage
 repositories (real in-memory SQLite), AI providers (HTTP-mocked, no real
-network/API key needed), and widget tests for every screen (real
+network/API key needed), sign-in and sync (two devices through an in-memory
+backend), and widget tests for every screen (real
 `tester.tap()` interaction, not device input simulation). Line coverage of
 `lib/` is 100%; `flutter test --coverage && dart run tool/check_coverage.dart`
 checks it. See `Docs/testing.md` for why the device-input distinction
@@ -102,6 +104,8 @@ Everything needed to understand and extend this codebase lives in `Docs/`:
 - `scheduling_algorithm.md`, FSRS scheduling, ratings and the v1 migration
 - `ai_providers.md`, the AI provider abstraction (OpenAI/Anthropic), how to
   add a third
+- `accounts_and_sync.md`, signing in from the app, the local sync columns
+  and triggers, the sync engine, Settings > Sync / Plan, build config
 - `backend.md`, the Convex backend: sync protocol, plans and usage, AI
   generation, billing, environment variables
 - `setup_guide.md`, creating the Convex, Clerk, Stripe and Anthropic

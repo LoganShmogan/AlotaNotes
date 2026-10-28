@@ -1,5 +1,5 @@
-// App entry, auth gate, login, the five-tab RootShell, and the Account
-// screen. Anything that reaches RootShell runs with the platform set to
+// App entry, auth gate, sign-in, the five-tab RootShell, and the Account
+// screen (device-only; signed-in flows are in cloud_screens_test.dart). Anything that reaches RootShell runs with the platform set to
 // Linux, so the real openAppDatabase() opens an FFI SQLite file in the
 // fake documents directory instead of calling the sqflite plugin.
 import 'package:flutter/material.dart';
@@ -21,15 +21,11 @@ import 'package:quillfin/settings/app_settings.dart';
 import 'package:quillfin/theme/theme.dart';
 
 import '../helpers/fake_notifications.dart';
+import '../helpers/fake_auth.dart';
 import '../helpers/test_env.dart';
 
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
 
-Future<HardcodedAuthService> signedIn() async {
-  final auth = HardcodedAuthService();
-  await auth.login('admin', '1234');
-  return auth;
-}
 
 void main() {
   setUpTestEnv();
@@ -47,7 +43,7 @@ void main() {
 
     testWidgets('QuillFinApp shows a spinner, then the login screen when signed out', (tester) async {
       await tester.runAsync(() async {
-        await tester.pumpWidget(QuillFinApp(authService: HardcodedAuthService()));
+        await tester.pumpWidget(QuillFinApp(authService: localAuth()));
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
         await waitForLoad(tester);
@@ -58,7 +54,7 @@ void main() {
 
     testWidgets('QuillFinApp goes straight to the app shell when already signed in', (tester) async {
       await tester.runAsync(() async {
-        await tester.pumpWidget(QuillFinApp(authService: await signedIn()));
+        await tester.pumpWidget(QuillFinApp(authService: await signedInLocally()));
         await waitForLoad(tester);
 
         expect(find.byType(RootShell), findsOneWidget);
@@ -68,50 +64,20 @@ void main() {
   });
 
   group('LoginScreen', () {
-    Finder field(String label) => find.byWidgetPredicate((w) => w is TextField && w.decoration?.labelText == label);
-
-    testWidgets('wrong credentials show an error and stay on the screen', (tester) async {
+    testWidgets('without cloud config, only "Continue on this device" is offered, and it opens the app', (tester) async {
       await tester.runAsync(() async {
-        final auth = HardcodedAuthService();
+        final auth = localAuth();
         await tester.pumpWidget(MaterialApp(home: LoginScreen(authService: auth)));
 
-        await tester.enterText(field('Username'), 'admin');
-        await tester.enterText(field('Password'), 'nope');
-        await tester.tap(find.text('Sign in'));
-        await pumpUntil(tester, () => find.text('Incorrect username or password.').evaluate().isNotEmpty);
-
-        expect(find.text('Sign in'), findsOneWidget); // button re-enabled
-        expect(await auth.currentUser(), isNull);
-      });
-    });
-
-    testWidgets('correct credentials sign in and open the app shell', (tester) async {
-      await tester.runAsync(() async {
-        final auth = HardcodedAuthService();
-        await tester.pumpWidget(MaterialApp(home: LoginScreen(authService: auth)));
-
-        await tester.enterText(field('Username'), '  admin  '); // username is trimmed
-        await tester.enterText(field('Password'), '1234');
-        await tester.tap(find.text('Sign in'));
-        await tester.pump();
-        expect(find.text('Signing in...'), findsOneWidget);
-
+        expect(find.text('Sign in or create an account'), findsNothing);
+        expect(find.text('Everything stays on this device.'), findsOneWidget);
+        await tester.tap(find.text('Continue on this device'));
         await pumpUntil(tester, () => find.byType(RootShell).evaluate().isNotEmpty);
         await settleNavigation(tester);
         expect(find.byType(LoginScreen), findsNothing);
-        expect((await auth.currentUser())?.username, 'admin');
+        expect((await auth.currentUser())?.isLocal, isTrue);
       });
     }, variant: linux);
-
-    testWidgets('pressing done on the password field submits', (tester) async {
-      await tester.runAsync(() async {
-        await tester.pumpWidget(MaterialApp(home: LoginScreen(authService: HardcodedAuthService())));
-
-        await tester.enterText(field('Password'), 'wrong');
-        await tester.testTextInput.receiveAction(TextInputAction.done);
-        await pumpUntil(tester, () => find.text('Incorrect username or password.').evaluate().isNotEmpty);
-      });
-    });
   });
 
   group('RootShell', () {
@@ -120,7 +86,7 @@ void main() {
 
     testWidgets('opens the app database, then switches between the five tabs', (tester) async {
       await tester.runAsync(() async {
-        await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedIn())));
+        await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedInLocally())));
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
         await waitForLoad(tester);
 
@@ -145,7 +111,7 @@ void main() {
         final fake = useFakeNotifications(FakeAndroidNotifications());
         await const AppSettingsStore().save(const AppSettings(remindersEnabled: true));
         final reminders = ReminderService(delivery: ReminderDelivery.scheduled);
-        await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedIn(), reminders: reminders)));
+        await tester.pumpWidget(MaterialApp(home: RootShell(authService: await signedInLocally(), reminders: reminders)));
         await waitForLoad(tester);
         await pumpUntil(tester, () => fake.cancelAllCalls == 1);
 
@@ -169,8 +135,8 @@ void main() {
     Finder field(String label) => find.byWidgetPredicate((w) => w is TextField && w.decoration?.labelText == label);
     String text(WidgetTester tester, String label) => tester.widget<TextField>(field(label)).controller!.text;
 
-    Future<HardcodedAuthService> show(WidgetTester tester) async {
-      final auth = await signedIn();
+    Future<QuillFinAuthService> show(WidgetTester tester) async {
+      final auth = await signedInLocally();
       await tester.pumpWidget(MaterialApp(home: AccountScreen(authService: auth)));
       await waitForLoad(tester);
       return auth;
@@ -180,7 +146,9 @@ void main() {
       await tester.runAsync(() async {
         await show(tester);
 
-        expect(find.text('admin'), findsOneWidget);
+        expect(find.text('This device'), findsOneWidget);
+        expect(find.text('Not signed in: everything stays on this device'), findsOneWidget);
+        expect(find.text('Sign in to sync'), findsNothing); // no cloud config in tests
         expect(find.text(defaultProvider), findsOneWidget);
         expect(text(tester, 'Model (e.g. gpt-4o-mini)'), defaultModel);
         expect(text(tester, 'Base URL override (optional)'), '');
@@ -259,14 +227,14 @@ void main() {
       });
     });
 
-    testWidgets('Log out signs out and replaces the whole stack with the login screen', (tester) async {
+    testWidgets('Sign out ends the session and replaces the whole stack with the login screen', (tester) async {
       await tester.runAsync(() async {
         final auth = await show(tester);
 
         // Below the fold of the 800x600 test viewport, so not built until scrolled to.
         // Each TextField has its own Scrollable, so name the list's (the outermost) explicitly.
-        await tester.scrollUntilVisible(find.text('Log out'), 200, scrollable: find.byType(Scrollable).first);
-        await tester.tap(find.text('Log out'));
+        await tester.scrollUntilVisible(find.text('Sign out'), 200, scrollable: find.byType(Scrollable).first);
+        await tester.tap(find.text('Sign out'));
         await settleNavigation(tester);
 
         expect(find.byType(LoginScreen), findsOneWidget);

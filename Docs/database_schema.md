@@ -2,7 +2,7 @@
 
 Single local SQLite database. `lib/storage/db.dart` holds the full DDL as a
 list of statements (`schemaStatements`), applied by `sqflite`'s `onCreate`
-on a fresh install. **Schema version 2** (`schemaVersion`); older databases
+on a fresh install. **Schema version 3** (`schemaVersion`); older databases
 are upgraded in place by `migrateSchema()` (see below).
 
 `PRAGMA foreign_keys = ON` is set in `onOpen`, after any upgrade, so every
@@ -79,6 +79,31 @@ keys are off during the upgrade, dropping `questions` doesn't cascade into
 it. `problems` and `problem_attempts` are created empty. The migration test
 (`test/storage/db_test.dart`) builds a real v1 file from
 `schemaStatementsV1` and upgrades it through `openAppDatabase()`.
+
+## Sync columns (v3)
+
+Every table above gets three more columns, kept current by
+triggers rather than by the repos (see `accounts_and_sync.md`):
+
+| Column | Type | Meaning |
+|---|---|---|
+| `uid` | `TEXT`, unique | random 32-hex id shared with the server and other devices |
+| `sync_updated_at` | `INTEGER` | last-writer-wins clock, ms since the epoch |
+| `dirty` | `INTEGER` 0/1 | 1 until the latest change has been pushed |
+
+Three tables support them:
+
+- `sync_state`: a single row holding the pull cursor, the account the data
+  last synced with, the last sync time, and the `applying` flag that turns
+  the triggers off while pulled rows are applied.
+- `sync_tombstones`: (`table_name`, `uid`, `deleted_at`) for each delete
+  not yet pushed, including deletes by cascade.
+- `sync_pending`: pulled rows held back until their parent arrives.
+
+The sync clock is the one timestamp computed in SQL, because it has to
+tick on every write, whoever makes it. The v2 to v3 migration adds the
+columns, gives every existing row a `uid` and marks it dirty, so the first
+sign-in uploads everything.
 
 ## Design notes
 

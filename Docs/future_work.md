@@ -35,11 +35,9 @@ Not attempted, not faked with a stub that pretends to work:
 
 ## Deliberate design choices, not gaps
 
-- **No real accounts or backend.** See `lib/auth/auth_service.dart`'s doc
-  comment. `HardcodedAuthService` (a single local admin/1234 session) is
-  meant to be swapped for a real provider later without touching any screen,
-  the same reasoning as the Python desktop app's swappable `ApiKeyStore`.
-- **No cross-device sync.** Falls out of the no-backend decision above.
+- **Accounts are optional.** "Continue on this device" stays alongside
+  QuillFin accounts, so the app works without an account or a network.
+  See `accounts_and_sync.md`.
 - **Bulk import stages a flat, reorderable list into one destination
   folder, not a reconstructed source folder tree.** Standard mobile file
   pickers return individually-picked files, not an enumerated folder tree;

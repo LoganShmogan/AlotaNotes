@@ -24,7 +24,7 @@ DateTime utcNow() => DateTime.now().toUtc();
 
 /// Bumped whenever [schemaStatements] changes; [migrateSchema] upgrades
 /// older databases in place.
-const schemaVersion = 2;
+const schemaVersion = 3;
 
 /// The FSRS columns shared by `questions` and `problems`. [card] null (a
 /// problem never attempted) clears them all.
@@ -125,7 +125,12 @@ const _srsColumns = '''
     last_reviewed_at TEXT,
 ''';
 
-const List<String> schemaStatements = [
+final List<String> schemaStatements = [...schemaStatementsV2, ..._v3SyncStatements];
+
+/// The v2 schema (before sync), kept so the v2 -> v3 migration test can
+/// build a real v2 database to upgrade.
+@visibleForTesting
+const List<String> schemaStatementsV2 = [
   '''
   CREATE TABLE folders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -160,6 +165,94 @@ const List<String> schemaStatements = [
   'CREATE INDEX idx_notes_folder_id ON notes(folder_id)',
   'CREATE INDEX idx_question_choices_question_id ON question_choices(question_id)',
   ..._v2Indexes,
+];
+
+/// Every table that syncs to the server, parents before children.
+const syncedLocalTables = [
+  'folders',
+  'notes',
+  'questions',
+  'question_choices',
+  'question_history',
+  'problems',
+  'problem_attempts',
+];
+
+// Schema v3: sync bookkeeping (Docs/quillfin_plan.md §3). Each synced table
+// gets three columns:
+//   uid              a random id shared with the server and other devices
+//   sync_updated_at  last-writer-wins clock, ms since the epoch
+//   dirty            1 until the row's latest change has been pushed
+// They are maintained by triggers, not by the repos, so no repo has to know
+// about sync, and deleting a row (including by ON DELETE CASCADE) leaves a
+// tombstone in sync_tombstones for the next push. This is the one place the
+// schema computes timestamps itself: the clock has to tick on every write,
+// whoever makes it. While the sync engine applies rows pulled from the
+// server it sets sync_state.applying = 1, which switches the triggers off.
+const _nowMs = "CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)";
+const _notApplying = '(SELECT applying FROM sync_state) = 0';
+
+final _v3SyncStatements = [
+  '''
+  CREATE TABLE sync_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    applying INTEGER NOT NULL DEFAULT 0 CHECK (applying IN (0, 1)),
+    cursor INTEGER NOT NULL DEFAULT 0,
+    user_id TEXT,
+    last_synced_at TEXT
+  )
+  ''',
+  'INSERT INTO sync_state (id) VALUES (1)',
+  '''
+  CREATE TABLE sync_tombstones (
+    table_name TEXT NOT NULL,
+    uid TEXT NOT NULL,
+    deleted_at INTEGER NOT NULL,
+    PRIMARY KEY (table_name, uid)
+  )
+  ''',
+  // Pulled rows whose parent hasn't arrived yet, retried after every pull.
+  '''
+  CREATE TABLE sync_pending (
+    table_name TEXT NOT NULL,
+    uid TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    PRIMARY KEY (table_name, uid)
+  )
+  ''',
+  for (final t in syncedLocalTables) ..._syncStatementsFor(t),
+];
+
+List<String> _syncStatementsFor(String t) => [
+  'ALTER TABLE $t ADD COLUMN uid TEXT',
+  'ALTER TABLE $t ADD COLUMN sync_updated_at INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE $t ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1',
+  // Existing rows (a v2 database) are all new to the server.
+  'UPDATE $t SET uid = lower(hex(randomblob(16))), sync_updated_at = $_nowMs',
+  'CREATE UNIQUE INDEX idx_${t}_uid ON $t(uid)',
+  'CREATE INDEX idx_${t}_dirty ON $t(dirty) WHERE dirty = 1',
+  '''
+  CREATE TRIGGER ${t}_sync_insert AFTER INSERT ON $t WHEN $_notApplying
+  BEGIN
+    UPDATE $t SET uid = COALESCE(NEW.uid, lower(hex(randomblob(16)))), sync_updated_at = $_nowMs, dirty = 1
+    WHERE id = NEW.id;
+  END
+  ''',
+  // Skips updates that set the sync columns themselves: the insert trigger
+  // above, and the sync engine marking a row clean.
+  '''
+  CREATE TRIGGER ${t}_sync_update AFTER UPDATE ON $t
+  WHEN $_notApplying AND NEW.dirty IS OLD.dirty AND NEW.sync_updated_at IS OLD.sync_updated_at
+  BEGIN
+    UPDATE $t SET sync_updated_at = $_nowMs, dirty = 1 WHERE id = NEW.id;
+  END
+  ''',
+  '''
+  CREATE TRIGGER ${t}_sync_delete AFTER DELETE ON $t WHEN $_notApplying AND OLD.uid IS NOT NULL
+  BEGIN
+    INSERT OR REPLACE INTO sync_tombstones (table_name, uid, deleted_at) VALUES ('$t', OLD.uid, $_nowMs);
+  END
+  ''',
 ];
 
 // Every table/index that's new or rebuilt in schema v2, so the migration and
@@ -246,6 +339,11 @@ const _v2Indexes = [
 /// cascade-delete every row pointing at it.
 Future<void> migrateSchema(DatabaseExecutor db, int oldVersion) async {
   if (oldVersion < 2) await _migrateV1ToV2(db);
+  if (oldVersion < 3) {
+    for (final statement in _v3SyncStatements) {
+      await db.execute(statement);
+    }
+  }
 }
 
 /// v1 -> v2: the fixed interval ladder becomes FSRS. SQLite can't drop a

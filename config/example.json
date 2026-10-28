@@ -1,0 +1,6 @@
+{
+  "QUILLFIN_CLERK_DOMAIN": "xyz.clerk.accounts.dev",
+  "QUILLFIN_CLERK_CLIENT_ID": "your-clerk-oauth-client-id",
+  "QUILLFIN_CONVEX_URL": "https://your-deployment.convex.cloud",
+  "QUILLFIN_SITE_URL": "https://quillfin.app"
+}

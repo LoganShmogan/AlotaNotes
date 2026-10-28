@@ -5,8 +5,8 @@ the backend runs on a local anonymous Convex deployment and all its tests
 pass with fakes (see `backend.md`). Do them in order: Convex first, because
 Clerk and Stripe both need its URLs.
 
-This guide covers the backend (Phase 2). Phases 3 and 4 add the Flutter and
-web app settings.
+This guide covers the backend (Phase 2) and the Flutter app (Phase 3).
+Phase 4 adds the web app's settings.
 
 ## 1. Convex
 
@@ -35,9 +35,9 @@ expected.
    - Name: QuillFin app.
    - Make it a **public** client (PKCE, no client secret).
    - Scopes: `openid profile email`.
-   - Redirect URIs: `com.savepoint.quillfin://callback` and
-     `http://localhost/callback` (loopback, for Windows and Linux; the
-     exact loopback form is settled in Phase 3).
+   - Redirect URIs: `com.savepoint.quillfin://callback` (Android and iOS)
+     and `http://127.0.0.1:47615/callback` (Windows, Linux and macOS: the
+     app listens there only while signing in).
 
    Copy the **Client ID**.
 4. Set both values on Convex:
@@ -101,6 +101,33 @@ Do this in **test mode** first. Repeat it in live mode before launch.
   so.
 - The end-to-end check (sign in, upgrade, sync) needs the apps from
   Phases 3 and 4.
+
+## 6. The Flutter app
+
+1. Copy `config/example.json` to `config/dev.json` (git-ignored) and fill
+   it in:
+   - `QUILLFIN_CLERK_DOMAIN`: the Frontend API host from step 2.2, without
+     `https://`.
+   - `QUILLFIN_CLERK_CLIENT_ID`: the OAuth client id from step 2.3.
+   - `QUILLFIN_CONVEX_URL`: the deployment URL from step 1.3.
+   - `QUILLFIN_SITE_URL`: the web app's URL.
+
+   These are all publishable values. Keys and secrets stay in Convex.
+2. Run with `flutter run --dart-define-from-file=config/dev.json`. Release
+   builds take the same flag.
+3. Check, on the first real sign-in:
+   - The browser opens Clerk, and after signing in the app moves on by
+     itself. On desktop, the tab says "You're signed in to QuillFin".
+   - Settings > Sync reaches "Last synced just now", and a note made on a
+     second device shows up after **Sync now**.
+   - Leave the app signed in for more than an hour (Clerk ID tokens are
+     short-lived), then sync again. This checks that Clerk's refresh grant
+     returns a new ID token. If it doesn't, sync shows "Your session has
+     expired", and `lib/auth/clerk_oauth.dart` needs to request the token
+     differently.
+   - Settings > Plan shows Free with 0 of 20, and **Upgrade monthly** opens
+     Stripe Checkout in test mode (card `4242 4242 4242 4242`). After
+     paying, coming back to the app shows Pro.
 
 ## Production
 

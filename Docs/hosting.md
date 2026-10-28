@@ -85,7 +85,7 @@ static files; **all data lives in each browser**:
   `anthropic-dangerous-direct-browser-access` header the app sends). A
   local Ollama/LM Studio endpoint has to allow the site's origin itself,
   e.g. `OLLAMA_ORIGINS=https://alotanotes.savepoint.co.nz`.
-- The `admin`/`1234` login is still only a local placeholder. It doesn't
-  protect anything on the server (there's nothing on the server to
-  protect). Anyone who can reach the URL gets their own empty copy of the
-  app, and each person uses their own API key.
+- The Flutter web build is device-only: it has no account sign-in
+  (accounts on the web belong to the Next.js app, Phase 4). Nothing on the
+  server needs protecting. Anyone who can reach the URL gets their own empty
+  copy of the app, and each person uses their own API key.

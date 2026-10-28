@@ -12,6 +12,7 @@ import '../../services/question_generation_service.dart';
 import '../../settings/app_settings.dart';
 import '../../storage/notes_repo.dart';
 import '../../storage/questions_repo.dart';
+import '../../sync/cloud_session.dart';
 import 'note_questions_screen.dart';
 
 typedef ProviderBuilder = AIProvider Function(String providerName, String apiKey, String model, String? baseUrl);
@@ -104,12 +105,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Future<void> _generateQuestions() async {
     setState(() => _generating = true);
     try {
+      final cloud = CloudScope.maybeOf(context);
       final apiKey = await _secureStorage.read(key: 'ai_api_key');
-      if (apiKey == null || apiKey.isEmpty) {
+      final settings = await _settingsStore.load();
+      final AIProvider provider;
+      if (apiKey != null && apiKey.isNotEmpty) {
+        provider = widget.providerBuilder(settings.provider, apiKey, settings.model, settings.baseUrl);
+      } else if (cloud != null) {
+        // Signed in without a key of your own: QuillFin's AI, within the plan.
+        provider = QuillFinAIProvider(cloud.client);
+      } else {
         throw const AIProviderError('No API key configured. Add one in the Account tab.');
       }
-      final settings = await _settingsStore.load();
-      final provider = widget.providerBuilder(settings.provider, apiKey, settings.model, settings.baseUrl);
       final service = QuestionGenerationService(
         notesRepo: _notesRepo,
         questionsRepo: _questionsRepo,

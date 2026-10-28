@@ -17,46 +17,33 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
   String? _error;
-  bool _submitting = false;
+  bool _waiting = false;
 
-  Future<void> _submit() async {
+  Future<void> _enter(Future<AppUser> Function() how) async {
     setState(() {
       _error = null;
-      _submitting = true;
+      _waiting = true;
     });
     try {
-      await widget.authService.login(_usernameController.text.trim(), _passwordController.text);
-      if (!mounted) return;
-      // Dismiss the keyboard before navigating -- letting a route transition
-      // start while the IME hide animation is still in flight leaves stale
-      // WindowInsets state on some Android versions/emulators, which throws
-      // off hit-testing (not just painting) on the next screen until the
-      // next full relayout. Closing it first avoids the race entirely.
-      FocusScope.of(context).unfocus();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await how();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => RootShell(authService: widget.authService, reminders: widget.reminders)),
       );
+    } on AuthCancelled {
+      // Back to the choices, with nothing to report.
     } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) setState(() => _waiting = false);
     }
   }
 
   @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final auth = widget.authService;
+    final textTheme = Theme.of(context).textTheme;
     final form = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 380),
       child: Column(
@@ -67,28 +54,44 @@ class _LoginScreenState extends State<LoginScreen> {
             const Align(alignment: Alignment.centerLeft, child: BrandLockup(size: 30, showOwner: true)),
             const SizedBox(height: 28),
           ],
-          Text('Welcome back', style: Theme.of(context).textTheme.headlineMedium),
+          Text('Welcome to QuillFin', style: textTheme.headlineMedium),
           const SizedBox(height: 6),
-          Text(brandTagline, style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: context.brand.inkSoft)),
+          Text(brandTagline, style: textTheme.bodyLarge!.copyWith(color: context.brand.inkSoft)),
           const SizedBox(height: 28),
-          TextField(
-            controller: _usernameController,
-            decoration: const InputDecoration(labelText: 'Username'),
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _passwordController,
-            decoration: const InputDecoration(labelText: 'Password'),
-            obscureText: true,
-            onSubmitted: (_) => _submit(),
-          ),
+          if (_waiting && auth.cloudAvailable) ...[
+            const Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 16),
+            Text('Finish signing in in your browser.', textAlign: TextAlign.center, style: textTheme.bodyLarge),
+            const SizedBox(height: 16),
+            OutlinedButton(onPressed: auth.cancelSignIn, child: const Text('Cancel')),
+          ] else ...[
+            if (auth.cloudAvailable) ...[
+              PrimaryButton(label: 'Sign in or create an account', onPressed: _waiting ? null : () => _enter(auth.signIn)),
+              const SizedBox(height: 8),
+              Text(
+                'Sync your notes, questions and problems across your devices.',
+                textAlign: TextAlign.center,
+                style: textTheme.bodySmall!.copyWith(color: context.brand.inkSoft),
+              ),
+              const SizedBox(height: 20),
+            ],
+            OutlinedButton(
+              onPressed: _waiting ? null : () => _enter(auth.continueOnDevice),
+              child: const Text('Continue on this device'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              auth.cloudAvailable
+                  ? 'No account: everything stays on this device. You can sign in later from Account.'
+                  : 'Everything stays on this device.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodySmall!.copyWith(color: context.brand.inkSoft),
+            ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ],
-          const SizedBox(height: 24),
-          PrimaryButton(label: _submitting ? 'Signing in...' : 'Sign in', onPressed: _submitting ? null : _submit),
         ],
       ),
     );

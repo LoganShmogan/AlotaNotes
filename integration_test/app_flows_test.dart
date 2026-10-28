@@ -29,6 +29,7 @@ import 'package:share_plus_platform_interface/share_plus_platform_interface.dart
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:quillfin/auth/auth_service.dart';
 import 'package:quillfin/main.dart' as app;
 import 'package:quillfin/storage/db.dart';
 
@@ -134,8 +135,16 @@ Future<void> pumpUntil(WidgetTester tester, bool Function() condition, {String? 
   throw TestFailure('Timed out waiting for: ${reason ?? 'condition'}');
 }
 
-Future<void> waitFor(WidgetTester tester, Finder finder) =>
-    pumpUntil(tester, () => finder.evaluate().isNotEmpty, reason: finder.toString());
+/// Waits for [finder], then lets any page transition finish, so the page
+/// underneath (still built while it animates) can't match the next finder.
+/// A fixed wait, not pumpAndSettle, which never returns while a spinner shows.
+Future<void> waitFor(WidgetTester tester, Finder finder) async {
+  await pumpUntil(tester, () => finder.evaluate().isNotEmpty, reason: finder.toString());
+  for (var i = 0; i < 25; i++) {
+    await tester.pump(const Duration(milliseconds: 16));
+    await Future<void>.delayed(const Duration(milliseconds: 16));
+  }
+}
 
 Future<void> waitForGone(WidgetTester tester, Finder finder) =>
     pumpUntil(tester, () => finder.evaluate().isEmpty, reason: 'gone: ${finder.toString()}');
@@ -176,6 +185,7 @@ void main() {
   late _FakeAiServer aiServer;
   const secureStorage = FlutterSecureStorage();
   String? savedApiKey;
+  String? savedSession;
   String? savedSettings;
 
   setUp(() async {
@@ -189,8 +199,10 @@ void main() {
     await aiServer.start();
 
     savedApiKey = await secureStorage.read(key: _apiKeyStorageKey);
+    savedSession = await secureStorage.read(key: QuillFinAuthService.storageKey);
     savedSettings = await SharedPreferencesAsync().getString(_settingsKey);
     await secureStorage.delete(key: _apiKeyStorageKey);
+    await secureStorage.delete(key: QuillFinAuthService.storageKey);
     await SharedPreferencesAsync().remove(_settingsKey);
   });
 
@@ -200,6 +212,11 @@ void main() {
       await secureStorage.delete(key: _apiKeyStorageKey);
     } else {
       await secureStorage.write(key: _apiKeyStorageKey, value: savedApiKey);
+    }
+    if (savedSession == null) {
+      await secureStorage.delete(key: QuillFinAuthService.storageKey);
+    } else {
+      await secureStorage.write(key: QuillFinAuthService.storageKey, value: savedSession);
     }
     if (savedSettings == null) {
       await SharedPreferencesAsync().remove(_settingsKey);
@@ -211,17 +228,18 @@ void main() {
 
   testWidgets('a full session: sign in, write notes, generate, quiz, track a problem, import, export, sign out',
       (tester) async {
+    // The desktop window opens at 1280x800 (sidebar and list-detail panes);
+    // this flow is written against the phone layout, so lay out as a phone.
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(412, 900);
+    addTearDown(tester.view.reset);
     app.main();
 
     // --- Sign in --------------------------------------------------------
-    await waitFor(tester, find.text('Sign in'));
-    await enterText(tester, field('Username'), 'admin');
-    await enterText(tester, field('Password'), 'wrong');
-    await tap(tester, find.text('Sign in'));
-    await waitFor(tester, find.text('Incorrect username or password.'));
-
-    await enterText(tester, field('Password'), '1234');
-    await tap(tester, find.text('Sign in'));
+    // Built without cloud config, so this is the only way in.
+    await waitFor(tester, find.text('Continue on this device'));
+    expect(find.text('Sign in or create an account'), findsNothing);
+    await tap(tester, find.text('Continue on this device'));
     await waitFor(tester, find.text('All caught up')); // the Today tab
 
     // The real openAppDatabase() created its file under the documents dir.
@@ -249,8 +267,9 @@ void main() {
     await tester.pumpAndSettle();
     await tap(tester, find.text('Geography'));
     await waitFor(tester, find.text('Empty. Use + to add a folder or note.'));
-
-    await tap(tester, find.byIcon(Icons.add));
+    // Hidden tabs stay built (IndexedStack), so only tap the + you can see.
+    await tap(tester, find.byIcon(Icons.add).hitTestable());
+    await tester.pumpAndSettle(); // the menu animates open from the bottom
     await tap(tester, find.text('New note'));
     await waitFor(tester, field('Body'));
     await enterText(tester, field('Title'), 'Capitals and planets');
@@ -274,6 +293,7 @@ void main() {
     expect(find.text('Which planet is largest?'), findsOneWidget);
     await tap(tester, find.text('What is the capital of France?'));
     await waitFor(tester, field('Question prompt'));
+    await tester.pumpAndSettle(); // until the note editor's title is covered
     expect(find.text('Capitals and planets'), findsOneWidget); // "Generated from" link
     await enterText(tester, field('Question prompt'), 'Name the capital of France.');
     await tap(tester, find.byIcon(Icons.save));
@@ -291,7 +311,8 @@ void main() {
       PlatformFile(name: 'week1.txt', size: 5, bytes: utf8.encode('Rivers flow downhill.')),
       PlatformFile(name: 'week2.md', size: 5, bytes: utf8.encode('# Mountains\nEverest is tallest.')),
     ]);
-    await tap(tester, find.byIcon(Icons.add));
+    await tap(tester, find.byIcon(Icons.add).hitTestable());
+    await tester.pumpAndSettle();
     await tap(tester, find.text('Bulk import files...'));
     await waitFor(tester, find.text('Review Import (2)'));
     await tap(tester, find.text('Import 2 note(s)'));
@@ -311,6 +332,8 @@ void main() {
 
     // Both questions share a due time, so either can come first.
     for (var i = 0; i < 2; i++) {
+      // Wait for the second question to replace the first.
+      if (i == 1) await waitForGone(tester, find.text('1 more due after this one'));
       if (find.text('Which planet is largest?').evaluate().isNotEmpty) {
         await tap(tester, find.text('Mars')); // deliberately wrong
         await tap(tester, find.text('Submit'));
@@ -371,11 +394,8 @@ void main() {
 
     // --- Sign out, sign back in: everything is still there ----------------
     await tap(tester, navTab('Account'));
-    await tap(tester, find.text('Log out'));
-    await waitFor(tester, find.text('Sign in'));
-    await enterText(tester, field('Username'), 'admin');
-    await enterText(tester, field('Password'), '1234');
-    await tap(tester, find.text('Sign in'));
+    await tap(tester, find.text('Sign out'));
+    await tap(tester, find.text('Continue on this device'));
     await tap(tester, navTab('Notes'));
     await waitFor(tester, find.text('Geography'));
 

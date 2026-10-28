@@ -9,11 +9,14 @@ import '../../services/reminder_service.dart';
 import '../../layout/breakpoints.dart';
 import '../../settings/app_settings.dart';
 import '../../settings/theme_controller.dart';
+import '../../sync/cloud_session.dart';
 import '../../theme/theme.dart';
 import '../../theme/widgets.dart';
+import 'cloud_sections.dart';
 
-/// App-wide settings: appearance, FSRS target retention, study reminders,
-/// default question format and full data export. AI provider/model/key and cloud
+/// App-wide settings: sync and plan (when signed in), appearance, FSRS
+/// target retention, study reminders, default question format and full
+/// data export. AI provider/model/key and cloud
 /// connections live in the Account tab instead (see
 /// Docs/flutter_rewrite_plan.md's information architecture).
 class SettingsScreen extends StatefulWidget {
@@ -95,7 +98,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<_Section> _sections(BuildContext context) {
     final retentionPercent = (_settings.desiredRetention * 100).round();
     final theme = ThemeControllerScope.maybeOf(context);
+    final cloud = CloudScope.maybeOf(context);
     return [
+      if (cloud != null) ...[
+        _Section('Sync', Icons.sync, [SyncPanel(session: cloud)]),
+        _Section('Plan', Icons.workspace_premium_outlined, [PlanPanel(session: cloud)]),
+      ],
       if (theme != null)
         _Section('Appearance', Icons.palette_outlined, [
           Padding(

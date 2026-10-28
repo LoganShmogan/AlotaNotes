@@ -5,6 +5,7 @@ import 'screens/login/login_screen.dart';
 import 'screens/root_shell.dart';
 import 'services/reminder_service.dart';
 import 'settings/theme_controller.dart';
+import 'sync/cloud_session.dart';
 import 'theme/theme.dart';
 
 class QuillFinApp extends StatefulWidget {
@@ -21,6 +22,13 @@ class _QuillFinAppState extends State<QuillFinApp> {
   late final ThemeController _theme = widget.themeController ?? ThemeController();
   final _light = buildAppTheme();
   final _dark = buildAppTheme(brightness: Brightness.dark);
+  final _cloud = CloudSessionHolder();
+
+  @override
+  void dispose() {
+    _cloud.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -40,6 +48,7 @@ class _QuillFinAppState extends State<QuillFinApp> {
           theme: _light,
           darkTheme: _dark,
           themeMode: mode,
+          builder: (context, child) => CloudScope(notifier: _cloud, child: child!),
           home: _AuthGate(authService: widget.authService, reminders: widget.reminders),
         ),
       ),

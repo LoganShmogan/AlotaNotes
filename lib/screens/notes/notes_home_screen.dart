@@ -11,7 +11,10 @@ import 'folder_detail_screen.dart';
 /// Root of the Notes tab: top-level subject folders.
 class NotesHomeScreen extends StatefulWidget {
   final Database db;
-  const NotesHomeScreen({super.key, required this.db});
+
+  /// Fires when folders may have changed elsewhere (a sync pull).
+  final Listenable? refresh;
+  const NotesHomeScreen({super.key, required this.db, this.refresh});
 
   @override
   State<NotesHomeScreen> createState() => _NotesHomeScreenState();
@@ -25,7 +28,14 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
   @override
   void initState() {
     super.initState();
+    widget.refresh?.addListener(_refresh);
     _refresh();
+  }
+
+  @override
+  void dispose() {
+    widget.refresh?.removeListener(_refresh);
+    super.dispose();
   }
 
   Future<void> _refresh() async {
@@ -83,7 +93,8 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(onPressed: _createFolder, child: const Icon(Icons.add)),
+      // No hero: see ProblemsScreen's FAB.
+      floatingActionButton: FloatingActionButton(heroTag: null, onPressed: _createFolder, child: const Icon(Icons.add)),
     );
   }
 }

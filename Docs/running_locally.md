@@ -29,14 +29,19 @@ flutter build apk --debug
 
 ## First run: signing in
 
-There's no real account system yet. Sign in with:
+A plain `flutter run` builds without cloud config, so the sign-in screen
+offers only **Continue on this device**: everything stays local.
 
-- Username: `admin`
-- Password: `1234`
+To try QuillFin accounts and sync, copy `config/example.json` to
+`config/dev.json` (git-ignored), fill in the Clerk and Convex values from
+`setup_guide.md`, and run:
 
-This is intentionally hardcoded behind a swappable `AuthService` interface
-(see `lib/auth/auth_service.dart`), meant to be replaced with a real
-provider later without touching any screen. See `future_work.md`.
+```bash
+flutter run --dart-define-from-file=config/dev.json
+```
+
+The sign-in screen then also offers **Sign in or create an account**, which
+opens Clerk in your browser. See `accounts_and_sync.md`.
 
 ## Configuring an AI provider
 
